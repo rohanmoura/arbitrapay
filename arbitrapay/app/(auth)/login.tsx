@@ -71,6 +71,7 @@ export default function LoginScreen() {
         provider: "google",
         options: {
           redirectTo,
+          skipBrowserRedirect: true
         },
       });
 
