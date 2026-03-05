@@ -9,7 +9,7 @@ import {
   Platform,
   Alert,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { supabase } from "@/lib/supabase";
 import { AppColors } from "@/theme/colors";
@@ -17,7 +17,6 @@ import { styles } from "@/screens/auth/VerifyOtp.styles";
 
 export default function VerifyOtpScreen() {
   const { email } = useLocalSearchParams<{ email?: string }>();
-  const router = useRouter();
 
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
@@ -49,7 +48,8 @@ export default function VerifyOtpScreen() {
       return;
     }
 
-    router.replace("/");
+    // Navigation is handled automatically by AuthGatedNavigation in _layout.tsx
+    // when onAuthStateChange fires with the new session after successful verification.
   }
 
   async function handleResend() {
