@@ -28,7 +28,7 @@ export default function VerifyOtpScreen() {
       return;
     }
 
-    if (otp.length !== 6) {
+    if (otp.trim().length !== 6) {
       Alert.alert("Invalid Code", "Please enter the 6-digit code.");
       return;
     }
@@ -37,7 +37,7 @@ export default function VerifyOtpScreen() {
 
     const { error } = await supabase.auth.verifyOtp({
       email,
-      token: otp,
+      token: otp.trim(),
       type: "email",
     });
 
@@ -48,21 +48,29 @@ export default function VerifyOtpScreen() {
       return;
     }
 
-    // Navigation is handled automatically by AuthGatedNavigation in _layout.tsx
-    // when onAuthStateChange fires with the new session after successful verification.
+    // No navigation needed
+    // AuthContext + _layout.tsx will redirect automatically
   }
 
   async function handleResend() {
-    if (!email) return;
+    if (!email) {
+      Alert.alert("Error", "Email missing. Please go back and try again.");
+      return;
+    }
 
     setResending(true);
 
-    await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: true },
     });
 
     setResending(false);
+
+    if (error) {
+      Alert.alert("Resend Failed", error.message);
+    } else {
+      Alert.alert("Code Sent", "A new verification code has been sent.");
+    }
   }
 
   return (
@@ -80,6 +88,7 @@ export default function VerifyOtpScreen() {
       >
         <View style={styles.card}>
           <Text style={styles.title}>Verify Email</Text>
+
           <Text style={styles.subtitle}>
             Enter the 6-digit code sent to your email
           </Text>
@@ -88,6 +97,7 @@ export default function VerifyOtpScreen() {
             placeholder="••••••"
             placeholderTextColor={AppColors.text.muted}
             keyboardType="number-pad"
+            textContentType="oneTimeCode"
             value={otp}
             onChangeText={setOtp}
             maxLength={6}
@@ -116,7 +126,12 @@ export default function VerifyOtpScreen() {
             disabled={resending}
             style={{ marginTop: 18 }}
           >
-            <Text style={{ color: AppColors.text.secondary, textAlign: "center" }}>
+            <Text
+              style={{
+                color: AppColors.text.secondary,
+                textAlign: "center",
+              }}
+            >
               {resending ? "Resending..." : "Resend Code"}
             </Text>
           </TouchableOpacity>

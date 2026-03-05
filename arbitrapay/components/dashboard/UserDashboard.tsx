@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import type { Href } from "expo-router";
 
 export default function UserScreen() {
-  const { profile } = useAuth();
+  const { profile, session } = useAuth();
   const router = useRouter();
 
   async function handleLogout() {
@@ -16,15 +16,17 @@ export default function UserScreen() {
       return;
     }
 
-    router.replace("/login" as Href);
+    router.replace("/(auth)/login" as Href);
   }
+
+  const email = profile?.email ?? session?.user?.email ?? "User";
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>USER DASHBOARD</Text>
 
       <Text style={styles.subtitle}>
-        Welcome: {profile?.email}
+        Welcome: {email}
       </Text>
 
       <View style={{ marginTop: 30 }}>
