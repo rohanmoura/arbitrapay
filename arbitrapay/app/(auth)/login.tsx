@@ -13,6 +13,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { makeRedirectUri } from "expo-auth-session";
 import { supabase } from "@/lib/supabase";
+import { setSessionFromUrl } from "@/lib/supabase-session-from-url";
 import { styles } from "@/screens/auth/Login.styles";
 import { AppColors } from "@/theme/colors";
 import * as WebBrowser from "expo-web-browser";
@@ -76,7 +77,11 @@ export default function LoginScreen() {
     }
 
     if (data?.url) {
-      await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+
+      if (result.type === "success" && result.url) {
+        await setSessionFromUrl(result.url);
+      }
     }
 
     setLoading(false);
