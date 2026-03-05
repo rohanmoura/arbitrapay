@@ -27,7 +27,8 @@ export default function LoginScreen() {
 
   // EMAIL OTP LOGIN
   async function handleSendOtp() {
-    if (!email) {
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail) {
       Alert.alert("Error", "Please enter your email");
       return;
     }
@@ -35,7 +36,7 @@ export default function LoginScreen() {
     setLoading(true);
 
     const { error } = await supabase.auth.signInWithOtp({
-      email,
+      email: trimmedEmail,
       options: {
         shouldCreateUser: true,
       },
@@ -50,7 +51,7 @@ export default function LoginScreen() {
 
     router.push({
       pathname: "/verify-otp",
-      params: { email },
+      params: { email: trimmedEmail },
     });
   }
 

@@ -28,28 +28,48 @@ export default function VerifyOtpScreen() {
       return;
     }
 
-    if (otp.length !== 6) {
+    const trimmedOtp = otp.trim();
+    if (trimmedOtp.length !== 6) {
       Alert.alert("Invalid Code", "Please enter the 6-digit code.");
       return;
     }
 
     setLoading(true);
 
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token: otp,
-      type: "email",
-    });
+    const trimmedEmail = email.trim().toLowerCase();
 
-    setLoading(false);
+    // Try verification with multiple OTP types to handle all Supabase GoTrue versions.
+    // Modern GoTrue supports "email" as a catch-all, but older versions require the
+    // specific type: "magiclink" for existing users, "signup" for new users created
+    // by signInWithOtp with shouldCreateUser: true.
+    // Failed attempts with the wrong type do NOT consume the OTP.
+    const typesToTry: ("email" | "magiclink" | "signup")[] = [
+      "email",
+      "magiclink",
+      "signup",
+    ];
 
-    if (error) {
-      Alert.alert("Verification Failed", error.message);
-      return;
+    let lastError: { message: string } | null = null;
+
+    for (const type of typesToTry) {
+      const { error } = await supabase.auth.verifyOtp({
+        email: trimmedEmail,
+        token: trimmedOtp,
+        type,
+      });
+
+      if (!error) {
+        // Success — navigation is handled automatically by AuthGatedNavigation
+        // when onAuthStateChange fires with the new session.
+        setLoading(false);
+        return;
+      }
+
+      lastError = error;
     }
 
-    // Navigation is handled automatically by AuthGatedNavigation in _layout.tsx
-    // when onAuthStateChange fires with the new session after successful verification.
+    setLoading(false);
+    Alert.alert("Verification Failed", lastError?.message || "Invalid OTP");
   }
 
   async function handleResend() {
@@ -58,11 +78,12 @@ export default function VerifyOtpScreen() {
     setResending(true);
 
     await supabase.auth.signInWithOtp({
-      email,
+      email: email.trim().toLowerCase(),
       options: { shouldCreateUser: true },
     });
 
     setResending(false);
+    Alert.alert("Code Sent", "A new verification code has been sent to your email.");
   }
 
   return (
