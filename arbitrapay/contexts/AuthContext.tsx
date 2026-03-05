@@ -58,10 +58,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
+    let mounted = true;
+
     const initialize = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
+
+      console.log("INITIAL SESSION:", session);
+
+
+      if (!mounted) return;
 
       setSession(session);
 
@@ -74,12 +81,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initialize();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (!mounted) return;
+
         setSession(session);
 
         if (session?.user) {
-          fetchOrCreateProfile(session.user.id, session.user.email);
+          await fetchOrCreateProfile(session.user.id, session.user.email);
         } else {
           setProfile(null);
         }
@@ -87,9 +96,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => {
-      authListener.subscription.unsubscribe();
+      mounted = false;
+      listener.subscription.unsubscribe();
     };
   }, []);
+
 
   return (
     <AuthContext.Provider value={{ session, profile, loading }}>

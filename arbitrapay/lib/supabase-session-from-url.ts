@@ -11,39 +11,64 @@ import { supabase } from "./supabase";
  */
 export async function setSessionFromUrl(url: string): Promise<boolean> {
   try {
-    // PKCE flow: extract authorization code from query params
+    console.log("OAUTH URL:", url);
+
+    // -----------------------------
+    // PKCE FLOW (code exchange)
+    // -----------------------------
     const codeMatch = url.match(/[?&]code=([^&#]+)/);
+
     if (codeMatch) {
       const code = codeMatch[1];
+
+      console.log("PKCE CODE FOUND:", code);
+
       const { error } = await supabase.auth.exchangeCodeForSession(code);
+
       if (error) {
         console.error("Failed to exchange code for session:", error.message);
         return false;
       }
+
+      console.log("SESSION CREATED VIA PKCE");
       return true;
     }
 
-    // Implicit flow: extract tokens from URL fragment
-    const fragmentString = url.includes("#") ? url.split("#")[1] : "";
-    if (!fragmentString) return false;
+    // -----------------------------
+    // IMPLICIT FLOW (token fragment)
+    // -----------------------------
+    if (!url.includes("#")) {
+      console.log("NO FRAGMENT FOUND IN URL");
+      return false;
+    }
 
-    const params = new URLSearchParams(fragmentString);
+    const fragment = url.split("#")[1];
+    const params = new URLSearchParams(fragment);
+
     const accessToken = params.get("access_token");
     const refreshToken = params.get("refresh_token");
 
-    if (accessToken && refreshToken) {
-      const { error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      });
-      if (error) {
-        console.error("Failed to set session from tokens:", error.message);
-        return false;
-      }
-      return true;
+    console.log("ACCESS TOKEN:", accessToken ? "FOUND" : "MISSING");
+    console.log("REFRESH TOKEN:", refreshToken ? "FOUND" : "MISSING");
+
+    if (!accessToken || !refreshToken) {
+      console.log("TOKENS NOT PRESENT IN URL");
+      return false;
     }
 
-    return false;
+    const { error } = await supabase.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+
+    if (error) {
+      console.error("Failed to set session from tokens:", error.message);
+      return false;
+    }
+
+    console.log("SESSION SET SUCCESSFULLY");
+    return true;
+
   } catch (err) {
     console.error("Error extracting session from URL:", err);
     return false;

@@ -18,44 +18,45 @@ function AuthGatedNavigation() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       {session ? (
-        <>
-          {/* Logged in */}
-          <Stack.Screen name="(tabs)" />
-        </>
+        <Stack.Screen name="(tabs)" />
       ) : (
-        <>
-          {/* Not logged in */}
-          <Stack.Screen name="(auth)" />
-        </>
+        <Stack.Screen name="(auth)" />
       )}
     </Stack>
   );
 }
 
-export const unstable_settings = {
-  anchor: "(tabs)",
-};
-
 export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    const subscription = Linking.addEventListener("url", async ({ url }) => {
-      console.log("Deep link opened:", url);
 
-      if (url.includes("code=") || url.includes("access_token=")) {
+    const handleUrl = async (url: string | null) => {
+      if (!url) return;
+
+      console.log("DEEP LINK URL:", url);
+
+      if (
+        url.includes("code=") ||
+        url.includes("access_token=") ||
+        url.includes("refresh_token=")
+      ) {
         await setSessionFromUrl(url);
       }
+    };
+
+    // when app already open
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      handleUrl(url);
     });
 
-    Linking.getInitialURL().then((url) => {
-      if (url && (url.includes("code=") || url.includes("access_token="))) {
-        console.log("Initial URL:", url);
-        setSessionFromUrl(url);
-      }
-    });
+    // when app opened from closed state
+    Linking.getInitialURL().then(handleUrl);
 
-    return () => subscription.remove();
+    return () => {
+      subscription.remove();
+    };
+
   }, []);
 
   return (

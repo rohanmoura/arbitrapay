@@ -56,41 +56,51 @@ export default function LoginScreen() {
   }
 
   // GOOGLE LOGIN
- async function handleGoogleLogin() {
-  try {
-    setLoading(true);
+  async function handleGoogleLogin() {
+    try {
+      setLoading(true);
 
-    const redirectTo = makeRedirectUri({
-      scheme: "arbitrapay",
-    });
+      const redirectTo = makeRedirectUri({
+        scheme: "arbitrapay",
+      });
 
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo,
-      },
-    });
+      console.log("REDIRECT URI:", redirectTo);
 
-    if (error) {
-      setLoading(false);
-      Alert.alert("Error", error.message);
-      return;
-    }
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+        },
+      });
 
-    if (data?.url) {
-      const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-
-      if (result.type === "success" && result.url) {
-        await setSessionFromUrl(result.url);
+      if (error) {
+        setLoading(false);
+        Alert.alert("Error", error.message);
+        return;
       }
-    }
 
-    setLoading(false);
-  } catch (err: any) {
-    setLoading(false);
-    Alert.alert("Error", err.message || "Google login failed");
+      if (data?.url) {
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+        console.log("AUTH SESSION RESULT:", result);
+        if (result.type === "success") {
+          console.log("REDIRECT URL:", result.url);
+        }
+
+        if (result.type === "success" && result.url) {
+          console.log("REDIRECT URL:", result.url);
+          await setSessionFromUrl(result.url);
+
+          const { data: sessionData } = await supabase.auth.getSession();
+          console.log("CURRENT SESSION:", sessionData.session);
+        }
+      }
+
+      setLoading(false);
+    } catch (err: any) {
+      setLoading(false);
+      Alert.alert("Error", err.message || "Google login failed");
+    }
   }
-}
 
   return (
     <LinearGradient
