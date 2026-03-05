@@ -16,19 +16,20 @@ import { supabase } from "@/lib/supabase";
 import { styles } from "@/screens/auth/Login.styles";
 import { AppColors } from "@/theme/colors";
 import * as WebBrowser from "expo-web-browser";
-import * as QueryParams from "expo-auth-session/build/QueryParams";
 
 WebBrowser.maybeCompleteAuthSession();
-
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // EMAIL OTP
+  // EMAIL OTP LOGIN
   async function handleSendOtp() {
-    if (!email) return;
+    if (!email) {
+      Alert.alert("Error", "Please enter your email");
+      return;
+    }
 
     setLoading(true);
 
@@ -53,53 +54,37 @@ export default function LoginScreen() {
   }
 
   // GOOGLE LOGIN
-  async function handleGoogleLogin() {
-    const redirectTo = makeRedirectUri();
+ async function handleGoogleLogin() {
+  try {
+    setLoading(true);
+
+    const redirectTo = makeRedirectUri({
+      scheme: "arbitrapay",
+    });
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo,
-        skipBrowserRedirect: true,
       },
     });
 
     if (error) {
+      setLoading(false);
       Alert.alert("Error", error.message);
       return;
     }
 
     if (data?.url) {
-      const result = await WebBrowser.openAuthSessionAsync(
-        data.url,
-        redirectTo
-      );
-
-      if (result.type === "success" && result.url) {
-        // Extract tokens from the redirect URL fragment
-        const { params, errorCode } = QueryParams.getQueryParams(result.url);
-
-        if (errorCode) {
-          Alert.alert("Error", errorCode);
-          return;
-        }
-
-        const { access_token, refresh_token } = params;
-
-        if (access_token && refresh_token) {
-          // Set the session — this triggers onAuthStateChange which handles navigation
-          const { error: sessionError } = await supabase.auth.setSession({
-            access_token,
-            refresh_token,
-          });
-
-          if (sessionError) {
-            Alert.alert("Error", sessionError.message);
-          }
-        }
-      }
+      await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
     }
+
+    setLoading(false);
+  } catch (err: any) {
+    setLoading(false);
+    Alert.alert("Error", err.message || "Google login failed");
   }
+}
 
   return (
     <LinearGradient
@@ -133,7 +118,7 @@ export default function LoginScreen() {
             style={styles.input}
           />
 
-          {/* EMAIL OTP BUTTON */}
+          {/* EMAIL BUTTON */}
           <TouchableOpacity
             onPress={handleSendOtp}
             disabled={loading}
@@ -168,9 +153,13 @@ export default function LoginScreen() {
               },
             ]}
           >
-            <Text style={{ color: "#000", fontWeight: "600" }}>
-              Continue with Google
-            </Text>
+            {loading ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text style={{ color: "#000", fontWeight: "600" }}>
+                Continue with Google
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

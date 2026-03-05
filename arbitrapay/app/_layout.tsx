@@ -1,15 +1,15 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 import * as Linking from "expo-linking";
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, useRouter, useSegments } from 'expo-router';
-import 'react-native-reanimated';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import type { Href } from 'expo-router';
-import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
+import { Stack, useRouter, useSegments } from "expo-router";
+import "react-native-reanimated";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import type { Href } from "expo-router";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import FullScreenLoader from "@/components/FullScreenLoader";
 
 function AuthGatedNavigation() {
-  const { session, loading, profile } = useAuth();
+  const { session, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -18,25 +18,16 @@ function AuthGatedNavigation() {
 
     const inAuthGroup = segments[0] === "(auth)";
 
-    // Not logged in → force login
     if (!session && !inAuthGroup) {
       router.replace("/(auth)/login" as Href);
       return;
     }
 
-    // Logged in → redirect away from auth screens
     if (session && inAuthGroup) {
-      if (!profile) return; // wait for profile to load
-
-      if (profile.role === "admin") {
-        router.replace("/admin" as Href);
-      } else {
-        router.replace("/" as Href);
-      }
+      router.replace("/" as Href);
     }
-  }, [session, loading, segments, profile, router]);
+  }, [session, loading, router, segments]);
 
-  // Show loading screen while checking session — blocks the entire navigation tree
   if (loading) {
     return <FullScreenLoader />;
   }
@@ -45,13 +36,16 @@ function AuthGatedNavigation() {
     <Stack>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+      <Stack.Screen
+        name="modal"
+        options={{ presentation: "modal", title: "Modal" }}
+      />
     </Stack>
   );
 }
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  anchor: "(tabs)",
 };
 
 export default function RootLayout() {
@@ -66,7 +60,7 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <AuthProvider>
         <AuthGatedNavigation />
       </AuthProvider>
