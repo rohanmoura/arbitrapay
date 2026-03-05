@@ -1,28 +1,43 @@
+import { useEffect } from 'react';
+import * as Linking from "expo-linking";
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Session } from '@supabase/supabase-js';
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
 import 'react-native-reanimated';
-
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { supabase } from '@/lib/supabase';
+import type { Href } from 'expo-router';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import FullScreenLoader from "@/components/FullScreenLoader";
 
-function AuthGuard({ session, initialized }: { session: Session | null; initialized: boolean }) {
+function AuthGuard() {
+  const { session, loading, profile } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    if (!initialized) return;
+    if (loading) return;
+    if (!segments.length) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
+    const inAuthGroup = segments[0] === "(auth)";
 
+    // 🔒 Not logged in → force login
     if (!session && !inAuthGroup) {
-      router.replace('/(auth)/login');
-    } else if (session && inAuthGroup) {
-      router.replace('/(tabs)');
+      router.replace("/(auth)/login" as Href);
+      return;
     }
-  }, [session, initialized, segments]);
+
+    // 🔓 Logged in → prevent going back to auth screens
+    if (session && inAuthGroup) {
+      if (!profile) return; // wait for profile to load
+
+      if (profile.role === "admin") {
+        router.replace("/admin" as Href);
+      } else {
+        router.replace("/" as Href);
+      }
+    }
+  }, [session, loading, segments, profile, router]);
+
+  if (loading) return <FullScreenLoader />;
 
   return null;
 }
@@ -33,33 +48,25 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const [session, setSession] = useState<Session | null>(null);
-  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setInitialized(true);
+    const subscription = Linking.addEventListener("url", ({ url }) => {
+      console.log("Deep link opened:", url);
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => subscription.remove();
   }, []);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-      </Stack>
-      <AuthGuard session={session} initialized={initialized} />
-      <StatusBar style="auto" />
+      <AuthProvider>
+        <AuthGuard />
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+        </Stack>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
