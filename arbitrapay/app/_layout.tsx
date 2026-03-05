@@ -6,6 +6,7 @@ import "react-native-reanimated";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import type { Href } from "expo-router";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { setSessionFromUrl } from "@/lib/supabase-session-from-url";
 import FullScreenLoader from "@/components/FullScreenLoader";
 
 function AuthGatedNavigation() {
@@ -52,8 +53,22 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    const subscription = Linking.addEventListener("url", ({ url }) => {
+    const subscription = Linking.addEventListener("url", async ({ url }) => {
       console.log("Deep link opened:", url);
+
+      // Handle OAuth callback deep links (fallback for when openAuthSessionAsync
+      // doesn't capture the redirect, e.g. on some Android devices)
+      if (url.includes("code=") || url.includes("access_token=")) {
+        await setSessionFromUrl(url);
+      }
+    });
+
+    // Also check the initial URL in case the app was cold-started via an OAuth redirect
+    Linking.getInitialURL().then((url) => {
+      if (url && (url.includes("code=") || url.includes("access_token="))) {
+        console.log("Initial URL contains OAuth params:", url);
+        setSessionFromUrl(url);
+      }
     });
 
     return () => subscription.remove();
