@@ -21,16 +21,16 @@ export async function setSessionFromUrl(url: string): Promise<boolean> {
     if (codeMatch) {
       const code = codeMatch[1];
 
-      console.log("PKCE CODE FOUND:", code);
+      console.log("PKCE CODE FOUND:", code.substring(0, 10) + "...");
 
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
       if (error) {
-        console.error("Failed to exchange code for session:", error.message);
+        console.error("PKCE exchange failed:", error.message);
         return false;
       }
 
-      console.log("SESSION CREATED VIA PKCE");
+      console.log("SESSION CREATED VIA PKCE, user:", data.session?.user?.email);
       return true;
     }
 
@@ -38,7 +38,7 @@ export async function setSessionFromUrl(url: string): Promise<boolean> {
     // IMPLICIT FLOW (token fragment)
     // -----------------------------
     if (!url.includes("#")) {
-      console.log("NO FRAGMENT FOUND IN URL");
+      console.log("NO AUTH PARAMS IN URL:", url);
       return false;
     }
 
@@ -56,7 +56,7 @@ export async function setSessionFromUrl(url: string): Promise<boolean> {
       return false;
     }
 
-    const { error } = await supabase.auth.setSession({
+    const { data, error } = await supabase.auth.setSession({
       access_token: accessToken,
       refresh_token: refreshToken,
     });
@@ -66,7 +66,7 @@ export async function setSessionFromUrl(url: string): Promise<boolean> {
       return false;
     }
 
-    console.log("SESSION SET SUCCESSFULLY");
+    console.log("SESSION SET SUCCESSFULLY, user:", data.session?.user?.email);
     return true;
 
   } catch (err) {

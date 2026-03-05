@@ -1,11 +1,12 @@
-import { useEffect } from "react";
-import * as Linking from "expo-linking";
+// Import the deep link handler FIRST — it registers module-level listeners
+// that capture OAuth redirect URLs before any React component mounts.
+import "@/lib/oauth-redirect-handler";
+
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import "react-native-reanimated";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { setSessionFromUrl } from "@/lib/supabase-session-from-url";
 import FullScreenLoader from "@/components/FullScreenLoader";
 
 function AuthGatedNavigation() {
@@ -28,36 +29,6 @@ function AuthGatedNavigation() {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-
-  useEffect(() => {
-
-    const handleUrl = async (url: string | null) => {
-      if (!url) return;
-
-      console.log("DEEP LINK URL:", url);
-
-      if (
-        url.includes("code=") ||
-        url.includes("access_token=") ||
-        url.includes("refresh_token=")
-      ) {
-        await setSessionFromUrl(url);
-      }
-    };
-
-    // when app already open
-    const subscription = Linking.addEventListener("url", ({ url }) => {
-      handleUrl(url);
-    });
-
-    // when app opened from closed state
-    Linking.getInitialURL().then(handleUrl);
-
-    return () => {
-      subscription.remove();
-    };
-
-  }, []);
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>

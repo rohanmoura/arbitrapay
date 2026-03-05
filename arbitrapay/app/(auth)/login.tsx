@@ -12,7 +12,6 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { makeRedirectUri } from "expo-auth-session";
-import * as Linking from "expo-linking";
 import { supabase } from "@/lib/supabase";
 import { setSessionFromUrl } from "@/lib/supabase-session-from-url";
 import { styles } from "@/screens/auth/Login.styles";
@@ -71,6 +70,7 @@ export default function LoginScreen() {
         provider: "google",
         options: {
           redirectTo,
+          skipBrowserRedirect: true,
         },
       });
 
@@ -81,29 +81,18 @@ export default function LoginScreen() {
       }
 
       if (data?.url) {
-        // On Android, the browser may return "dismiss" instead of "success"
-        // when a custom scheme redirect fires. Set up a deep link listener
-        // as a fallback to capture the redirect URL.
-        let deepLinkUrl: string | null = null;
-        const linkSubscription = Linking.addEventListener("url", ({ url }) => {
-          deepLinkUrl = url;
-        });
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          redirectTo
+        );
+        console.log("AUTH SESSION RESULT:", result.type);
 
-        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-        console.log("AUTH SESSION RESULT:", result);
-
-        // Use the URL from the browser result, or fall back to the deep link
-        const redirectUrl =
-          (result.type === "success" && result.url) ? result.url : deepLinkUrl;
-
-        linkSubscription.remove();
-
-        if (redirectUrl) {
-          console.log("REDIRECT URL:", redirectUrl);
-          await setSessionFromUrl(redirectUrl);
-
-          const { data: sessionData } = await supabase.auth.getSession();
-          console.log("CURRENT SESSION:", sessionData.session);
+        // If the browser returned the URL directly (iOS, or Android success),
+        // process it here. Otherwise, the module-level deep link handler
+        // in oauth-redirect-handler.ts + AuthContext will catch it.
+        if (result.type === "success" && result.url) {
+          console.log("BROWSER RETURNED URL:", result.url);
+          await setSessionFromUrl(result.url);
         }
       }
 
@@ -133,7 +122,7 @@ export default function LoginScreen() {
           </Text>
 
           <Text style={styles.subtitle}>
-            We’ll send you a 6-digit verification code
+            We'll send you a 6-digit verification code
           </Text>
 
           <TextInput
