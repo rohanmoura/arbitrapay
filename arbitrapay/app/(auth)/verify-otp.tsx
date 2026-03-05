@@ -73,7 +73,10 @@ export default function VerifyOtpScreen() {
   }
 
   async function handleResend() {
-    if (!email) return;
+    if (!email) {
+      Alert.alert("Error", "Email missing. Please go back and try again.");
+      return;
+    }
 
     setResending(true);
 
@@ -101,6 +104,7 @@ export default function VerifyOtpScreen() {
       >
         <View style={styles.card}>
           <Text style={styles.title}>Verify Email</Text>
+
           <Text style={styles.subtitle}>
             Enter the 6-digit code sent to your email
           </Text>
@@ -109,6 +113,7 @@ export default function VerifyOtpScreen() {
             placeholder="••••••"
             placeholderTextColor={AppColors.text.muted}
             keyboardType="number-pad"
+            textContentType="oneTimeCode"
             value={otp}
             onChangeText={setOtp}
             maxLength={6}
@@ -137,7 +142,12 @@ export default function VerifyOtpScreen() {
             disabled={resending}
             style={{ marginTop: 18 }}
           >
-            <Text style={{ color: AppColors.text.secondary, textAlign: "center" }}>
+            <Text
+              style={{
+                color: AppColors.text.secondary,
+                textAlign: "center",
+              }}
+            >
               {resending ? "Resending..." : "Resend Code"}
             </Text>
           </TouchableOpacity>
