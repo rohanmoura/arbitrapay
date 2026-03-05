@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // If profile doesn't exist → create it
+    // Profile doesn't exist yet — create it
     const { data: newProfile, error: insertError } = await supabase
       .from("profiles")
       .insert({
@@ -77,16 +77,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Only act on meaningful auth events
+      if (
+        event === "SIGNED_IN" ||
+        event === "TOKEN_REFRESHED" ||
+        event === "SIGNED_OUT"
+      ) {
+        setSession(session);
 
-      if (session?.user) {
-        await fetchOrCreateProfile(session.user.id, session.user.email);
-      } else {
-        setProfile(null);
+        if (session?.user) {
+          await fetchOrCreateProfile(session.user.id, session.user.email);
+        } else {
+          setProfile(null);
+        }
       }
-
-      setLoading(false); // 🔥 THIS WAS MISSING
     });
 
     return () => subscription.unsubscribe();

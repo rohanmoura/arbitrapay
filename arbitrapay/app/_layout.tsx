@@ -8,24 +8,23 @@ import type { Href } from 'expo-router';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import FullScreenLoader from "@/components/FullScreenLoader";
 
-function AuthGuard() {
+function AuthGatedNavigation() {
   const { session, loading, profile } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
     if (loading) return;
-    if (!segments.length) return;
 
     const inAuthGroup = segments[0] === "(auth)";
 
-    // 🔒 Not logged in → force login
+    // Not logged in → force login
     if (!session && !inAuthGroup) {
       router.replace("/(auth)/login" as Href);
       return;
     }
 
-    // 🔓 Logged in → prevent going back to auth screens
+    // Logged in → redirect away from auth screens
     if (session && inAuthGroup) {
       if (!profile) return; // wait for profile to load
 
@@ -37,9 +36,18 @@ function AuthGuard() {
     }
   }, [session, loading, segments, profile, router]);
 
-  if (loading) return <FullScreenLoader />;
+  // Show loading screen while checking session — blocks the entire navigation tree
+  if (loading) {
+    return <FullScreenLoader />;
+  }
 
-  return null;
+  return (
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+    </Stack>
+  );
 }
 
 export const unstable_settings = {
@@ -60,12 +68,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AuthProvider>
-        <AuthGuard />
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-        </Stack>
+        <AuthGatedNavigation />
       </AuthProvider>
     </ThemeProvider>
   );

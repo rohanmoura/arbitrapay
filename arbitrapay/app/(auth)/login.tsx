@@ -7,13 +7,16 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { makeRedirectUri } from "expo-auth-session";
 import { supabase } from "@/lib/supabase";
 import { styles } from "@/screens/auth/Login.styles";
 import { AppColors } from "@/theme/colors";
 import * as WebBrowser from "expo-web-browser";
+import * as QueryParams from "expo-auth-session/build/QueryParams";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -23,7 +26,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // 🔹 EMAIL OTP
+  // EMAIL OTP
   async function handleSendOtp() {
     if (!email) return;
 
@@ -38,17 +41,20 @@ export default function LoginScreen() {
 
     setLoading(false);
 
-    if (!error) {
-      router.push({
-        pathname: "/verify-otp",
-        params: { email },
-      });
+    if (error) {
+      Alert.alert("Error", error.message);
+      return;
     }
+
+    router.push({
+      pathname: "/verify-otp",
+      params: { email },
+    });
   }
 
-  // 🔹 GOOGLE LOGIN
+  // GOOGLE LOGIN
   async function handleGoogleLogin() {
-    const redirectTo = "arbitrapay://auth";
+    const redirectTo = makeRedirectUri();
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -59,7 +65,7 @@ export default function LoginScreen() {
     });
 
     if (error) {
-      console.log("OAuth error:", error.message);
+      Alert.alert("Error", error.message);
       return;
     }
 
@@ -69,9 +75,28 @@ export default function LoginScreen() {
         redirectTo
       );
 
-      if (result.type === "success") {
-        const { data: sessionData } = await supabase.auth.getSession();
-        console.log("Session after OAuth:", sessionData?.session);
+      if (result.type === "success" && result.url) {
+        // Extract tokens from the redirect URL fragment
+        const { params, errorCode } = QueryParams.getQueryParams(result.url);
+
+        if (errorCode) {
+          Alert.alert("Error", errorCode);
+          return;
+        }
+
+        const { access_token, refresh_token } = params;
+
+        if (access_token && refresh_token) {
+          // Set the session — this triggers onAuthStateChange which handles navigation
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+
+          if (sessionError) {
+            Alert.alert("Error", sessionError.message);
+          }
+        }
       }
     }
   }
