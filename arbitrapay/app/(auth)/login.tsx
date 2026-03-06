@@ -11,13 +11,17 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { makeRedirectUri } from "expo-auth-session";
+import * as WebBrowser from "expo-web-browser";
 import { supabase } from "@/lib/supabase";
 import { styles } from "@/screens/auth/Login.styles";
 import { AppColors } from "@/theme/colors";
+import { extractOAuthParams } from "@/lib/oauth-helpers";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const router = useRouter();
 
   // EMAIL OTP LOGIN (UNCHANGED)
@@ -51,9 +55,56 @@ export default function LoginScreen() {
     });
   }
 
-  // GOOGLE BUTTON (UI ONLY - no logic)
-  function handleGoogleLogin() {
-    Alert.alert("Coming soon", "Google login will be added later.");
+  // GOOGLE OAUTH LOGIN
+  async function handleGoogleLogin() {
+    try {
+      setGoogleLoading(true);
+
+      const redirectUri = makeRedirectUri({ scheme: "arbitrapay" });
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: redirectUri,
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error || !data.url) {
+        Alert.alert("Error", error?.message ?? "Failed to start Google login");
+        return;
+      }
+
+      const result = await WebBrowser.openAuthSessionAsync(
+        data.url,
+        redirectUri
+      );
+
+      if (result.type !== "success" || !result.url) {
+        // User cancelled or browser dismissed
+        return;
+      }
+
+      const params = extractOAuthParams(result.url);
+
+      if (params.code) {
+        const { error: exchangeError } =
+          await supabase.auth.exchangeCodeForSession(params.code);
+
+        if (exchangeError) {
+          Alert.alert("Login failed", exchangeError.message);
+        }
+        // Session is now established — AuthContext will detect it automatically
+      } else if (params.error_description) {
+        Alert.alert("Login failed", params.error_description);
+      }
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "An unexpected error occurred";
+      Alert.alert("Error", message);
+    } finally {
+      setGoogleLoading(false);
+    }
   }
 
   return (
@@ -111,9 +162,10 @@ export default function LoginScreen() {
             <Text style={{ color: AppColors.text.muted }}>OR</Text>
           </View>
 
-          {/* GOOGLE BUTTON (UI ONLY) */}
+          {/* GOOGLE BUTTON */}
           <TouchableOpacity
             onPress={handleGoogleLogin}
+            disabled={googleLoading}
             style={[
               styles.button,
               {
@@ -122,9 +174,13 @@ export default function LoginScreen() {
               },
             ]}
           >
-            <Text style={{ color: "#000", fontWeight: "600" }}>
-              Continue with Google
-            </Text>
+            {googleLoading ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <Text style={{ color: "#000", fontWeight: "600" }}>
+                Continue with Google
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

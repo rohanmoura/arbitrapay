@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { Linking } from "react-native";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { extractOAuthParams } from "@/lib/oauth-helpers";
 
 type Profile = {
   id: string;
@@ -62,7 +64,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     let mounted = true;
 
+    /**
+     * Handle an OAuth redirect URL by extracting the authorization code
+     * and exchanging it for a Supabase session. This covers the Android
+     * cold-start case where the app was killed while the browser was open
+     * and is relaunched via the deep link.
+     */
+    const handleOAuthRedirect = async (url: string | null) => {
+      if (!url) return false;
+
+      const params = extractOAuthParams(url);
+      if (!params.code) return false;
+
+      console.log("OAuth redirect detected, exchanging code for session");
+      const { error } = await supabase.auth.exchangeCodeForSession(
+        params.code
+      );
+      if (error) {
+        console.log("OAuth code exchange error:", error.message);
+      }
+      // Whether success or failure, we handled the redirect
+      return true;
+    };
+
     const initSession = async () => {
+      // Check if the app was launched via an OAuth redirect (cold-start)
+      const initialUrl = await Linking.getInitialURL();
+      await handleOAuthRedirect(initialUrl);
+
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -82,6 +111,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initSession();
 
+    // Listen for deep links while the app is running (warm-start)
+    const linkingSub = Linking.addEventListener("url", async ({ url }) => {
+      await handleOAuthRedirect(url);
+    });
+
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         if (!mounted) return;
@@ -99,6 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       mounted = false;
       authListener.subscription.unsubscribe();
+      linkingSub.remove();
     };
   }, []);
 
