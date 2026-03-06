@@ -82,7 +82,23 @@ export default function LoginScreen() {
       }
 
       if (data?.url) {
-        await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          redirectTo
+        );
+
+        if (result.type === "success" && result.url) {
+          const url = new URL(result.url);
+          const code = url.searchParams.get("code");
+
+          if (code) {
+            const { error } = await supabase.auth.exchangeCodeForSession(code);
+            if (error) {
+              console.log("OAuth code exchange error:", error.message);
+              Alert.alert("Error", "Failed to complete Google login");
+            }
+          }
+        }
       }
 
       setLoading(false);

@@ -1,68 +1,57 @@
-# Google OAuth Session Persistence - Diagnosis
+# Google OAuth Session Persistence - Root Cause Analysis
 
-## Problem Summary
-Google OAuth flow completes (browser opens, user authenticates, redirect back to app works) but Supabase session is never established. App remains on login screen. OTP login works correctly, confirming AsyncStorage and AuthContext are functional.
+## Problem
+Google OAuth redirects back to the app successfully, but no Supabase session is created. `Linking.getInitialURL()` returns null. `Linking.addEventListener("url")` never fires. `exchangeCodeForSession()` is never called.
 
-## Root Cause Analysis (Ranked by Probability)
+## Root Cause: `openAuthSessionAsync` result discarded at `login.tsx:85`
 
-### 1. PKCE Code Verifier Lost on App Cold-Start (HIGH - ~80%)
+The authorization code is reliably delivered — but no code path reads it.
 
-The PKCE flow requires a `code_verifier` (generated during `signInWithOAuth`) to be available when `exchangeCodeForSession(code)` is called. Console logs show the JS bundle reloads after OAuth redirect, indicating Android kills the app process while the browser is open.
+### How `expo-web-browser` works on Android
 
-When the app cold-starts from the deep link:
-- A fresh Supabase client is created
-- `exchangeCodeForSession(code)` is called in `initSession()`
-- But the code_verifier stored by the original Supabase instance may not survive process death
+`WebBrowser.openAuthSessionAsync()` opens a Chrome Custom Tab. When the redirect URL (`arbitrapay://?code=AUTH_CODE`) fires, the `expo-web-browser` plugin's `WebBrowserRedirectActivity` **intercepts the Android intent** before `expo-linking` ever sees it. It closes the Chrome Tab and resolves the JS promise with `{ type: "success", url: "arbitrapay://?code=AUTH_CODE" }`.
 
-The WebCrypto warning ("Code challenge method will default to use plain instead of sha256") confirms PKCE is using the `plain` method, but the exchange still requires the stored verifier.
+This means:
+- `Linking.addEventListener("url")` **never fires** — the intent was consumed by `WebBrowserRedirectActivity`
+- `Linking.getInitialURL()` **returns null** — the app wasn't launched via a standard VIEW intent
 
-**Verification:** Add error logging to `exchangeCodeForSession()` in `AuthContext.tsx:114`.
+The **only** place the auth code is available is the return value of `openAuthSessionAsync`.
 
-### 2. Deep Link URL Not Captured by Either Handler (MEDIUM-HIGH - ~60%)
+### The bug (login.tsx:84-86)
 
-Race condition between deep link delivery and handler registration:
-- `Linking.getInitialURL()` may return `null` if expo-router consumes the URL first
-- `Linking.addEventListener("url")` is not registered at cold-start time when the link arrives
-
-**Evidence:** `INITIAL SESSION: null` in logs suggests the code was never exchanged.
-
-### 3. `openAuthSessionAsync` Return Value Discarded (MEDIUM - ~50%)
-
-In `login.tsx:84-86`, the result of `WebBrowser.openAuthSessionAsync()` is not used:
 ```typescript
-await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-// Result containing the redirect URL with auth code is thrown away
+if (data?.url) {
+  await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+  // ← Return value containing the auth code is silently discarded
+}
 ```
 
-In a warm-return scenario, `openAuthSessionAsync` resolves with the redirect URL. The code exchange should happen here rather than relying solely on deep link handlers.
+The promise resolves with the redirect URL containing `?code=AUTH_CODE`. The code throws it away. `exchangeCodeForSession()` in AuthContext never runs because neither deep link handler receives the URL.
 
-### 4. Redirect URI Mismatch (LOW-MEDIUM - ~30%)
+### Cold-start variant
 
-`makeRedirectUri({ scheme: "arbitrapay" })` produces `arbitrapay://` (bare scheme, no path). Verify the exact string is in Supabase Dashboard's allowed redirect URLs. Some configurations require a path component.
+When Android kills the app while Chrome is open, the `openAuthSessionAsync` promise dies with the process. On cold-start, `WebBrowserRedirectActivity` forwards the intent to the main activity, but through its internal mechanism — not as a standard deep link. `Linking.getInitialURL()` returns null for the same reason.
 
-### 5. Expo Dev Client Deep Link Interference (LOW - ~20%)
+### Why OTP works
 
-Dev client may intercept deep links before app code, potentially stripping query parameters.
+OTP never leaves the app process. No browser redirect, no deep link, no `openAuthSessionAsync`. The session is created entirely in-process via `verifyOtp()`.
 
-**Verification:** Test with a production build via `eas build`.
+## Fix applied: `login.tsx`
 
-### 6. `detectSessionInUrl: true` Side Effect (LOW - ~15%)
-
-This setting is designed for web (reads `window.location`). In React Native it may race with manual `exchangeCodeForSession` calls or fail silently.
-
-## Recommended Fix Strategy
-
-The most robust fix: **Capture the result from `openAuthSessionAsync` in `login.tsx` and perform the code exchange there**, rather than relying on deep link handlers. This is the recommended pattern from both Expo and Supabase docs:
+Capture the `openAuthSessionAsync` result and exchange the code immediately:
 
 ```typescript
 const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-if (result.type === "success") {
+if (result.type === "success" && result.url) {
   const url = new URL(result.url);
   const code = url.searchParams.get("code");
   if (code) {
-    await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error) {
+      console.log("OAuth code exchange error:", error.message);
+    }
   }
 }
 ```
 
-Keep the deep link handlers in AuthContext as a fallback for cold-start scenarios, but also add robust error logging to identify when the PKCE verifier is missing.
+The PKCE `code_verifier` is already in AsyncStorage (stored by `signInWithOAuth`). Since this is the same process and same Supabase client instance, `exchangeCodeForSession` will find it and complete the exchange. The session is persisted, `onAuthStateChange` fires, and the user navigates to the app.
