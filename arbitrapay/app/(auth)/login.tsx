@@ -16,7 +16,6 @@ import * as WebBrowser from "expo-web-browser";
 import { supabase } from "@/lib/supabase";
 import { styles } from "@/screens/auth/Login.styles";
 import { AppColors } from "@/theme/colors";
-import { extractOAuthParams } from "@/lib/oauth-helpers";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -56,6 +55,18 @@ export default function LoginScreen() {
   }
 
   // GOOGLE OAUTH LOGIN
+  //
+  // Uses openBrowserAsync (system browser) instead of openAuthSessionAsync
+  // (Chrome Custom Tab). openAuthSessionAsync intercepts the redirect
+  // internally via WebBrowserRedirectActivity — the URL never reaches
+  // Android's deep link system, so Linking.useURL() never fires. When
+  // Android kills the process while the tab is open, the promise is also
+  // lost, making the redirect URL unrecoverable.
+  //
+  // openBrowserAsync lets the redirect flow through Android's standard
+  // intent system → Expo Router → Linking.useURL() in _layout.tsx, which
+  // then calls exchangeCodeForSession(). This works on both warm return
+  // and cold start.
   async function handleGoogleLogin() {
     try {
       setGoogleLoading(true);
@@ -75,29 +86,9 @@ export default function LoginScreen() {
         return;
       }
 
-      const result = await WebBrowser.openAuthSessionAsync(
-        data.url,
-        redirectUri
-      );
-
-      if (result.type !== "success" || !result.url) {
-        // User cancelled or browser dismissed
-        return;
-      }
-
-      const params = extractOAuthParams(result.url);
-
-      if (params.code) {
-        const { error: exchangeError } =
-          await supabase.auth.exchangeCodeForSession(params.code);
-
-        if (exchangeError) {
-          Alert.alert("Login failed", exchangeError.message);
-        }
-        // Session is now established — AuthContext will detect it automatically
-      } else if (params.error_description) {
-        Alert.alert("Login failed", params.error_description);
-      }
+      // Open system browser — the redirect will come back as a deep link
+      // handled by useURL() in _layout.tsx
+      await WebBrowser.openBrowserAsync(data.url);
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "An unexpected error occurred";
