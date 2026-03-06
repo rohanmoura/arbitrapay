@@ -11,13 +11,9 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { makeRedirectUri } from "expo-auth-session";
 import { supabase } from "@/lib/supabase";
 import { styles } from "@/screens/auth/Login.styles";
 import { AppColors } from "@/theme/colors";
-import * as WebBrowser from "expo-web-browser";
-
-WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -55,66 +51,9 @@ export default function LoginScreen() {
     });
   }
 
-  // GOOGLE LOGIN (SIMPLIFIED)
-  async function handleGoogleLogin() {
-    try {
-      setLoading(true);
-
-      const redirectTo = makeRedirectUri({
-        scheme: "arbitrapay",
-      });
-
-      console.log("REDIRECT URI:", redirectTo);
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo,
-          skipBrowserRedirect: true,
-        },
-      });
-
-      if (error) {
-        console.log("OAuth error:", error.message);
-        Alert.alert("Error", error.message);
-        setLoading(false);
-        return;
-      }
-
-      if (data?.url) {
-
-        const result = await WebBrowser.openAuthSessionAsync(
-          data.url,
-          redirectTo
-        );
-
-        console.log("AUTH SESSION RESULT:", result);
-
-        if (result.type === "success" && result.url) {
-
-          const url = new URL(result.url);
-          const code = url.searchParams.get("code");
-
-          console.log("OAUTH CODE:", code);
-
-          if (code) {
-            const { data: sessionData, error: sessionError } =
-              await supabase.auth.exchangeCodeForSession(code);
-
-            console.log("SESSION RESULT:", sessionData);
-
-            if (sessionError) {
-              console.log("SESSION ERROR:", sessionError.message);
-            }
-          }
-        }
-      }
-
-      setLoading(false);
-    } catch (err: any) {
-      console.log("GOOGLE LOGIN ERROR:", err);
-      setLoading(false);
-    }
+  // GOOGLE BUTTON (UI ONLY - no logic)
+  function handleGoogleLogin() {
+    Alert.alert("Coming soon", "Google login will be added later.");
   }
 
   return (
@@ -172,10 +111,9 @@ export default function LoginScreen() {
             <Text style={{ color: AppColors.text.muted }}>OR</Text>
           </View>
 
-          {/* GOOGLE BUTTON */}
+          {/* GOOGLE BUTTON (UI ONLY) */}
           <TouchableOpacity
             onPress={handleGoogleLogin}
-            disabled={loading}
             style={[
               styles.button,
               {
@@ -184,13 +122,9 @@ export default function LoginScreen() {
               },
             ]}
           >
-            {loading ? (
-              <ActivityIndicator color="#000" />
-            ) : (
-              <Text style={{ color: "#000", fontWeight: "600" }}>
-                Continue with Google
-              </Text>
-            )}
+            <Text style={{ color: "#000", fontWeight: "600" }}>
+              Continue with Google
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
