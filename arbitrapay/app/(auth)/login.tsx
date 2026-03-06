@@ -64,6 +64,8 @@ export default function LoginScreen() {
         scheme: "arbitrapay",
       });
 
+      console.log("REDIRECT URI:", redirectTo);
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -79,7 +81,49 @@ export default function LoginScreen() {
       }
 
       if (data?.url) {
-        await WebBrowser.openBrowserAsync(data.url);
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          redirectTo
+        );
+
+        if (result.type === "success" && result.url) {
+          // Extract the auth params from the redirect URL and set the session
+          const url = new URL(result.url);
+
+          // For PKCE flow, the code comes as a query parameter
+          const code = url.searchParams.get("code");
+
+          if (code) {
+            const { error: sessionError } =
+              await supabase.auth.exchangeCodeForSession(code);
+            if (sessionError) {
+              console.log("Session exchange error:", sessionError.message);
+              Alert.alert("Error", sessionError.message);
+            }
+          }
+
+          // For implicit flow, tokens come as hash fragment params
+          // (keeping as fallback in case flow type changes)
+          if (!code && result.url.includes("#")) {
+            const hashParams = new URLSearchParams(
+              result.url.split("#")[1]
+            );
+            const accessToken = hashParams.get("access_token");
+            const refreshToken = hashParams.get("refresh_token");
+
+            if (accessToken && refreshToken) {
+              const { error: sessionError } =
+                await supabase.auth.setSession({
+                  access_token: accessToken,
+                  refresh_token: refreshToken,
+                });
+              if (sessionError) {
+                console.log("Session set error:", sessionError.message);
+                Alert.alert("Error", sessionError.message);
+              }
+            }
+          }
+        }
       }
 
       setLoading(false);

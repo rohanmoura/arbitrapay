@@ -59,9 +59,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    Linking.addEventListener("url", (e) => {
+    const handleDeepLink = async (e: { url: string }) => {
       console.log("DEEP LINK RECEIVED:", e.url);
-    });
+
+      // Handle OAuth redirect: extract code for PKCE flow
+      try {
+        const url = new URL(e.url);
+        const code = url.searchParams.get("code");
+
+        if (code) {
+          const { error } = await supabase.auth.exchangeCodeForSession(code);
+          if (error) {
+            console.log("Deep link session exchange error:", error.message);
+          }
+          return;
+        }
+
+        // Handle implicit flow tokens in hash fragment
+        if (e.url.includes("#")) {
+          const hashParams = new URLSearchParams(e.url.split("#")[1]);
+          const accessToken = hashParams.get("access_token");
+          const refreshToken = hashParams.get("refresh_token");
+
+          if (accessToken && refreshToken) {
+            const { error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            if (error) {
+              console.log("Deep link session set error:", error.message);
+            }
+          }
+        }
+      } catch (err) {
+        console.log("Deep link parsing error:", err);
+      }
+    };
+
+    const subscription = Linking.addEventListener("url", handleDeepLink);
     
     let mounted = true;
     
@@ -101,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false;
+      subscription.remove();
       authListener.subscription.unsubscribe();
     };
   }, []);
