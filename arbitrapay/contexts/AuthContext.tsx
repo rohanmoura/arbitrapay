@@ -59,6 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
+    console.log("APP STARTED")
     const handleDeepLink = async (e: { url: string }) => {
       console.log("DEEP LINK RECEIVED:", e.url);
 
@@ -103,6 +104,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initSession = async () => {
 
       const initialUrl = await Linking.getInitialURL();
+
+      console.log("INITIAL URL RAW:", initialUrl);
 
       if (initialUrl) {
         console.log("INITIAL URL:", initialUrl);

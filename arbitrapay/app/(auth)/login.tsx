@@ -82,11 +82,38 @@ export default function LoginScreen() {
       }
 
       if (data?.url) {
-        await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          redirectTo
+        );
+
+        console.log("AUTH SESSION RESULT:", result);
+
+        if (result.type === "success" && result.url) {
+          const url = new URL(result.url);
+          const code = url.searchParams.get("code");
+
+          console.log("OAUTH CODE:", code);
+
+          if (code) {
+            const { data: sessionData, error: sessionError } =
+              await supabase.auth.exchangeCodeForSession(code);
+
+            console.log("CODE EXCHANGE RESULT:", {
+              session: sessionData?.session,
+              error: sessionError,
+            });
+
+            if (sessionError) {
+              Alert.alert("Error", sessionError.message);
+            }
+          }
+        }
       }
 
       setLoading(false);
     } catch (err: any) {
+      console.log("GOOGLE LOGIN ERROR:", err);
       setLoading(false);
       Alert.alert("Error", err.message || "Google login failed");
     }
