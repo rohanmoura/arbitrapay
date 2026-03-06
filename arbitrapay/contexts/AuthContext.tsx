@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import * as Linking from "expo-linking";
 
 type Profile = {
   id: string;
@@ -52,21 +53,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .select()
       .single();
 
-    if (!insertError) {
+    if (!insertError && newProfile) {
       setProfile(newProfile);
     }
   }
 
   useEffect(() => {
+    Linking.addEventListener("url", (e) => {
+      console.log("DEEP LINK RECEIVED:", e.url);
+    });
+    
     let mounted = true;
-
-    const initialize = async () => {
+    
+    const initSession = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
 
       console.log("INITIAL SESSION:", session);
-
 
       if (!mounted) return;
 
@@ -79,9 +83,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     };
 
-    initialize();
+    initSession();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
+    const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         if (!mounted) return;
 
@@ -97,10 +101,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       mounted = false;
-      listener.subscription.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
   }, []);
-
 
   return (
     <AuthContext.Provider value={{ session, profile, loading }}>
