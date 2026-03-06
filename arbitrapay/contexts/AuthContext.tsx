@@ -97,10 +97,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const subscription = Linking.addEventListener("url", handleDeepLink);
-    
+
     let mounted = true;
-    
+
     const initSession = async () => {
+
+      const initialUrl = await Linking.getInitialURL();
+
+      if (initialUrl) {
+        console.log("INITIAL URL:", initialUrl);
+
+        const url = new URL(initialUrl);
+        const code = url.searchParams.get("code");
+
+        if (code) {
+          await supabase.auth.exchangeCodeForSession(code);
+        }
+      }
+
+
       const {
         data: { session },
       } = await supabase.auth.getSession();
