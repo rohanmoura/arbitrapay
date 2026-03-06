@@ -82,6 +82,7 @@ export default function LoginScreen() {
       }
 
       if (data?.url) {
+
         const result = await WebBrowser.openAuthSessionAsync(
           data.url,
           redirectTo
@@ -90,6 +91,7 @@ export default function LoginScreen() {
         console.log("AUTH SESSION RESULT:", result);
 
         if (result.type === "success" && result.url) {
+
           const url = new URL(result.url);
           const code = url.searchParams.get("code");
 
@@ -99,13 +101,10 @@ export default function LoginScreen() {
             const { data: sessionData, error: sessionError } =
               await supabase.auth.exchangeCodeForSession(code);
 
-            console.log("CODE EXCHANGE RESULT:", {
-              session: sessionData?.session,
-              error: sessionError,
-            });
+            console.log("SESSION RESULT:", sessionData);
 
             if (sessionError) {
-              Alert.alert("Error", sessionError.message);
+              console.log("SESSION ERROR:", sessionError.message);
             }
           }
         }
@@ -115,7 +114,6 @@ export default function LoginScreen() {
     } catch (err: any) {
       console.log("GOOGLE LOGIN ERROR:", err);
       setLoading(false);
-      Alert.alert("Error", err.message || "Google login failed");
     }
   }
 
