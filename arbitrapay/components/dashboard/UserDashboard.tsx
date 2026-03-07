@@ -1,22 +1,30 @@
 import { View, Text, StyleSheet, Button, Alert } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { useRouter } from "expo-router";
-import type { Href } from "expo-router";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 export default function UserScreen() {
   const { profile, session } = useAuth();
-  const router = useRouter();
 
   async function handleLogout() {
-    const { error } = await supabase.auth.signOut();
+    try {
+      const currentUser = await GoogleSignin.getCurrentUser();
 
-    if (error) {
-      Alert.alert("Logout Error", error.message);
-      return;
+      if (currentUser) {
+        await GoogleSignin.signOut();
+      }
+
+      // Supabase logout
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        Alert.alert("Logout Error", error.message);
+        return;
+      }
+
+    } catch (err: any) {
+      Alert.alert("Logout Error", err.message);
     }
-
-    router.replace("/(auth)/login" as Href);
   }
 
   const email = profile?.email ?? session?.user?.email ?? "User";

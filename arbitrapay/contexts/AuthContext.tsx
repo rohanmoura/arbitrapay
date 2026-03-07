@@ -33,7 +33,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .maybeSingle();
 
     if (error) {
-      console.log("Profile fetch error:", error);
       setProfile(null);
       return;
     }
@@ -58,7 +57,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    console.log("APP STARTED");
 
     let mounted = true;
 
@@ -67,14 +65,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         data: { session },
       } = await supabase.auth.getSession();
 
-      console.log("INITIAL SESSION:", session);
-
       if (!mounted) return;
 
       setSession(session);
 
       if (session?.user) {
         await fetchOrCreateProfile(session.user.id, session.user.email);
+      } else {
+        setProfile(null);
       }
 
       setLoading(false);

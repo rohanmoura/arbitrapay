@@ -1,5 +1,8 @@
 import { useState } from "react";
 import {
+  GoogleSignin,
+} from "@react-native-google-signin/google-signin";
+import {
   View,
   TextInput,
   Text,
@@ -8,23 +11,23 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Image,
+  ScrollView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import { makeRedirectUri } from "expo-auth-session";
-import * as WebBrowser from "expo-web-browser";
 import { supabase } from "@/lib/supabase";
 import { styles } from "@/screens/auth/Login.styles";
 import { AppColors } from "@/theme/colors";
-import { extractOAuthParams } from "@/lib/oauth-helpers";
+import { AntDesign } from "@expo/vector-icons";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
   const router = useRouter();
 
-  // EMAIL OTP LOGIN (UNCHANGED)
   async function handleSendOtp() {
     const trimmedEmail = email.trim().toLowerCase();
 
@@ -37,9 +40,7 @@ export default function LoginScreen() {
 
     const { error } = await supabase.auth.signInWithOtp({
       email: trimmedEmail,
-      options: {
-        shouldCreateUser: true,
-      },
+      options: { shouldCreateUser: true },
     });
 
     setLoading(false);
@@ -55,53 +56,33 @@ export default function LoginScreen() {
     });
   }
 
-  // GOOGLE OAUTH LOGIN
   async function handleGoogleLogin() {
     try {
       setGoogleLoading(true);
 
-      const redirectUri = makeRedirectUri({ scheme: "arbitrapay" });
+      await GoogleSignin.hasPlayServices();
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const userInfo = await GoogleSignin.signIn();
+      const idToken = userInfo.data?.idToken;
+
+      if (!idToken) {
+        Alert.alert("Login failed", "No Google ID token received");
+        return;
+      }
+
+      const { error } = await supabase.auth.signInWithIdToken({
         provider: "google",
-        options: {
-          redirectTo: redirectUri,
-          skipBrowserRedirect: true,
-        },
+        token: idToken,
       });
 
-      if (error || !data.url) {
-        Alert.alert("Error", error?.message ?? "Failed to start Google login");
+      if (error) {
+        Alert.alert("Login failed", error.message);
         return;
       }
 
-      const result = await WebBrowser.openAuthSessionAsync(
-        data.url,
-        redirectUri
-      );
-
-      if (result.type !== "success" || !result.url) {
-        // User cancelled or browser dismissed
-        return;
-      }
-
-      const params = extractOAuthParams(result.url);
-
-      if (params.code) {
-        const { error: exchangeError } =
-          await supabase.auth.exchangeCodeForSession(params.code);
-
-        if (exchangeError) {
-          Alert.alert("Login failed", exchangeError.message);
-        }
-        // Session is now established — AuthContext will detect it automatically
-      } else if (params.error_description) {
-        Alert.alert("Login failed", params.error_description);
-      }
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "An unexpected error occurred";
-      Alert.alert("Error", message);
+      router.replace("/(tabs)");
+    } catch (err: any) {
+      Alert.alert("Error", err.message ?? "Google login failed");
     } finally {
       setGoogleLoading(false);
     }
@@ -118,71 +99,99 @@ export default function LoginScreen() {
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.wrapper}
+        style={{ flex: 1 }}
       >
-        <View style={styles.card}>
-          <Text style={styles.title}>
-            Continue with <Text style={styles.highlight}>Email</Text>
-          </Text>
+        <ScrollView
+          contentContainerStyle={styles.wrapper}
+          keyboardShouldPersistTaps="handled"
+        >
 
-          <Text style={styles.subtitle}>
-            We&apos;ll send you a 6-digit verification code
-          </Text>
-
-          <TextInput
-            placeholder="Enter your email"
-            placeholderTextColor={AppColors.text.muted}
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            style={styles.input}
-          />
-
-          {/* EMAIL BUTTON */}
-          <TouchableOpacity
-            onPress={handleSendOtp}
-            disabled={loading}
-            style={styles.buttonWrapper}
-          >
-            <LinearGradient
-              colors={AppColors.accent.gradient}
-              style={styles.button}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Send Code</Text>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-
-          {/* DIVIDER */}
-          <View style={{ marginVertical: 16, alignItems: "center" }}>
-            <Text style={{ color: AppColors.text.muted }}>OR</Text>
+          {/* LOGO */}
+          <View style={styles.logoWrapper}>
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={styles.logo}
+            />
           </View>
 
-          {/* GOOGLE BUTTON */}
-          <TouchableOpacity
-            onPress={handleGoogleLogin}
-            disabled={googleLoading}
-            style={[
-              styles.button,
-              {
-                backgroundColor: "#FFFFFF",
-                marginTop: 4,
-              },
-            ]}
-          >
-            {googleLoading ? (
-              <ActivityIndicator color="#000" />
-            ) : (
-              <Text style={{ color: "#000", fontWeight: "600" }}>
-                Continue with Google
-              </Text>
-            )}
-          </TouchableOpacity>
-        </View>
+          {/* BRAND HEADER */}
+          <View style={styles.header}>
+            <Text style={styles.appName}>ARBITRAPAY</Text>
+            <Text style={styles.tagline}>
+              Smart finance. Seamless payments.
+            </Text>
+          </View>
+
+          {/* AUTH CARD */}
+          <View style={styles.card}>
+
+            <Text style={styles.title}>
+              Continue with <Text style={styles.highlight}>Email</Text>
+            </Text>
+
+            <Text style={styles.subtitle}>
+              Enter your email to receive a secure verification code.
+            </Text>
+
+            {/* EMAIL INPUT */}
+            <TextInput
+              placeholder="Enter your email"
+              placeholderTextColor={AppColors.text.muted}
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              style={styles.input}
+            />
+
+            {/* EMAIL BUTTON */}
+            <TouchableOpacity
+              onPress={handleSendOtp}
+              disabled={loading}
+              style={styles.buttonWrapper}
+            >
+              <LinearGradient
+                colors={AppColors.accent.gradient}
+                style={styles.button}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>
+                    Send Verification Code
+                  </Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* DIVIDER */}
+            <View style={styles.dividerRow}>
+              <View style={styles.divider} />
+              <Text style={styles.dividerText}>or continue with</Text>
+              <View style={styles.divider} />
+            </View>
+
+            {/* GOOGLE BUTTON */}
+            <TouchableOpacity
+              onPress={handleGoogleLogin}
+              disabled={googleLoading}
+              style={styles.googleButton}
+            >
+              {googleLoading ? (
+                <ActivityIndicator color="#000" />
+              ) : (
+                <View style={styles.googleContent}>
+                  <AntDesign name="google" size={20} color="#DB4437" />
+                  <Text style={styles.googleText}>
+                    Continue with Google
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+          </View>
+
+        </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>
   );

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -8,8 +8,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Image,
+  ScrollView,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { supabase } from "@/lib/supabase";
 import { AppColors } from "@/theme/colors";
@@ -17,11 +19,50 @@ import { styles } from "@/screens/auth/VerifyOtp.styles";
 
 export default function VerifyOtpScreen() {
   const { email } = useLocalSearchParams<{ email?: string }>();
-  const router = useRouter();
 
-  const [otp, setOtp] = useState("");
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+
+  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
+
+  const inputs = useRef<(TextInput | null)[]>([]);
+
+  useEffect(() => {
+    if (timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  function formatTime(seconds: number) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+
+    return `${m}:${s < 10 ? "0" : ""}${s}`;
+  }
+
+  function handleOtpChange(text: string, index: number) {
+    const newOtp = [...otp];
+    newOtp[index] = text;
+    setOtp(newOtp);
+
+    if (text && index < 5) {
+      inputs.current[index + 1]?.focus();
+    }
+  }
+
+  function handleKeyPress(
+    e: { nativeEvent: { key: string } },
+    index: number
+  ) {
+    if (e.nativeEvent.key === "Backspace" && otp[index] === "" && index > 0) {
+      inputs.current[index - 1]?.focus();
+    }
+  }
 
   async function handleVerify() {
     if (!email) {
@@ -29,7 +70,7 @@ export default function VerifyOtpScreen() {
       return;
     }
 
-    const trimmedOtp = otp.trim();
+    const trimmedOtp = otp.join("");
 
     if (trimmedOtp.length !== 6) {
       Alert.alert("Invalid Code", "Please enter the 6-digit code.");
@@ -40,17 +81,11 @@ export default function VerifyOtpScreen() {
 
     const trimmedEmail = email.trim().toLowerCase();
 
-    console.log("EMAIL:", trimmedEmail);
-    console.log("OTP:", trimmedOtp);
-
     const { error } = await supabase.auth.verifyOtp({
       email: trimmedEmail,
       token: trimmedOtp,
       type: "magiclink",
     });
-
-    // console.log("VERIFY DATA:", data);
-    // console.log("VERIFY ERROR:", error);
 
     setLoading(false);
 
@@ -59,8 +94,7 @@ export default function VerifyOtpScreen() {
       return;
     }
 
-    // OTP verified successfully → go to home
-    router.replace("/");
+    router.replace("/(tabs)");
   }
 
   async function handleResend() {
@@ -81,6 +115,7 @@ export default function VerifyOtpScreen() {
     if (error) {
       Alert.alert("Error", error.message);
     } else {
+      setTimeLeft(300); // reset timer
       Alert.alert("Code Sent", "A new verification code has been sent.");
     }
   }
@@ -96,58 +131,95 @@ export default function VerifyOtpScreen() {
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.wrapper}
+        style={{ flex: 1 }}
       >
-        <View style={styles.card}>
-          <Text style={styles.title}>Verify Email</Text>
+        <ScrollView
+          contentContainerStyle={styles.wrapper}
+          keyboardShouldPersistTaps="handled"
+        >
 
-          <Text style={styles.subtitle}>
-            Enter the 6-digit code sent to your email
-          </Text>
+          {/* LOGO */}
+          <View style={styles.logoWrapper}>
+            <Image
+              source={require("@/assets/images/icon.png")}
+              style={styles.logo}
+            />
+          </View>
 
-          <TextInput
-            placeholder="••••••"
-            placeholderTextColor={AppColors.text.muted}
-            keyboardType="number-pad"
-            textContentType="oneTimeCode"
-            value={otp}
-            onChangeText={setOtp}
-            maxLength={6}
-            style={styles.input}
-          />
-
-          <TouchableOpacity
-            onPress={handleVerify}
-            disabled={loading}
-            style={styles.buttonWrapper}
-          >
-            <LinearGradient
-              colors={AppColors.accent.gradient}
-              style={styles.button}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Verify</Text>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={handleResend}
-            disabled={resending}
-            style={{ marginTop: 18 }}
-          >
-            <Text
-              style={{
-                color: AppColors.text.secondary,
-                textAlign: "center",
-              }}
-            >
-              {resending ? "Resending..." : "Resend Code"}
+          {/* HEADER */}
+          <View style={styles.header}>
+            <Text style={styles.appName}>ARBITRAPAY</Text>
+            <Text style={styles.tagline}>
+              Secure email verification
             </Text>
-          </TouchableOpacity>
-        </View>
+          </View>
+
+          {/* CARD */}
+          <View style={styles.card}>
+
+            <Text style={styles.title}>
+              Verify <Text style={styles.highlight}>Email</Text>
+            </Text>
+
+            <Text style={styles.subtitle}>
+              Enter the 6-digit code sent to{" "}
+              <Text style={styles.email}>{email}</Text>
+            </Text>
+
+            {/* OTP BOXES */}
+            <View style={styles.otpContainer}>
+              {[0, 1, 2, 3, 4, 5].map((index) => (
+                <TextInput
+                  key={index}
+                  ref={(ref) => {
+                    inputs.current[index] = ref;
+                  }}
+                  style={styles.otpBox}
+                  keyboardType="number-pad"
+                  maxLength={1}
+                  value={otp[index]}
+                  onChangeText={(text) => handleOtpChange(text, index)}
+                  onKeyPress={(e) => handleKeyPress(e, index)}
+                />
+              ))}
+            </View>
+
+            {/* VERIFY BUTTON */}
+            <TouchableOpacity
+              onPress={handleVerify}
+              disabled={loading}
+              style={styles.buttonWrapper}
+            >
+              <LinearGradient
+                colors={AppColors.accent.gradient}
+                style={styles.button}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>Verify Code</Text>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            {/* RESEND */}
+            <TouchableOpacity
+              onPress={handleResend}
+              disabled={resending || timeLeft > 0}
+              style={styles.resendWrapper}
+            >
+              <Text style={styles.resendText}>
+                {timeLeft > 0
+                  ? `Resend in ${formatTime(timeLeft)}`
+                  : resending
+                  ? "Resending..."
+                  : "Resend Code"}
+              </Text>
+            </TouchableOpacity>
+
+          </View>
+
+        </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>
   );
