@@ -1,64 +1,75 @@
-import { View, Text, StyleSheet, Button, Alert } from "react-native";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
-import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import HeaderBar from "@/components/dashboard-compo/HeaderBar";
+import StatsGrid from "@/components/dashboard-compo/StatsGrid";
+import WalletHero from "@/components/dashboard-compo/WalletCard";
+import { styles } from "@/screens/dashboard/UserDashboard.styles";
 
-export default function UserScreen() {
-  const { profile, session } = useAuth();
+import { useRef, useState } from "react";
+import { Animated, View } from "react-native";
 
-  async function handleLogout() {
-    try {
-      const currentUser = await GoogleSignin.getCurrentUser();
+import BannerSlider from "../banner-slider";
+import BankStats from "../dashboard-compo/BankStatus";
+import OtherResources from "../dashboard-compo/OtherResources";
+import QuickLinks from "../dashboard-compo/QuickActions";
+import Sidebar from "../dashboard-compo/Sidebar";
+import FloatingTelegramButton from "../FloatingTelegramButton";
 
-      if (currentUser) {
-        await GoogleSignin.signOut();
-      }
+export default function UserDashboard() {
 
-      // Supabase logout
-      const { error } = await supabase.auth.signOut();
+  const scrollY = useRef(new Animated.Value(0)).current;
 
-      if (error) {
-        Alert.alert("Logout Error", error.message);
-        return;
-      }
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    } catch (err: any) {
-      Alert.alert("Logout Error", err.message);
-    }
-  }
+  const openMenu = () => {
+    setSidebarOpen(true);
+  };
 
-  const email = profile?.email ?? session?.user?.email ?? "User";
+  const closeMenu = () => {
+    setSidebarOpen(false);
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>USER DASHBOARD</Text>
 
-      <Text style={styles.subtitle}>
-        Welcome: {email}
-      </Text>
+      {/* HEADER */}
+      <HeaderBar
+        openMenu={openMenu}
+        isOpen={sidebarOpen}
+      />
 
-      <View style={{ marginTop: 30 }}>
-        <Button title="Logout" onPress={handleLogout} />
-      </View>
+      {/* SIDEBAR */}
+      <Sidebar
+        visible={sidebarOpen}
+        onClose={closeMenu}
+      />
+
+      {/* MAIN CONTENT */}
+      <Animated.ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        scrollEventThrottle={16}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+      >
+
+        <BannerSlider />
+
+        <WalletHero />
+
+        <QuickLinks />
+
+        <StatsGrid />
+
+        <BankStats />
+
+        <OtherResources />
+
+      </Animated.ScrollView>
+
+      {/* FLOATING SUPPORT BUTTON */}
+      <FloatingTelegramButton scrollY={scrollY} />
+
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#0F172A",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#94A3B8",
-  },
-});
