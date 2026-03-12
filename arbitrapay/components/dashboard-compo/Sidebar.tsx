@@ -34,20 +34,20 @@ export default function Sidebar({ visible, onClose }: Props) {
     }, [visible, slide]);
 
     const tabs = [
-        { icon: "shield-checkmark-outline", label: "Verify Account" },
+        { icon: "shield-checkmark-outline", label: "Verify Account", route: "/account-activation" },
         { icon: "pulse-outline", label: "Live Activity" },
         {
             icon: "lock-closed-outline",
             label: "Security Wallet",
             route: "/security-deposit"
         },
-        { icon: "business-outline", label: "Linked Banks" },
+        { icon: "business-outline", label: "Linked Banks", route: "/bank-account" },
         {
             icon: "arrow-down-outline",
             label: "Withdraw Funds",
             route: "/withdrawal"
         },
-        { icon: "swap-horizontal-outline", label: "Payment History" },
+        { icon: "swap-horizontal-outline", label: "Payment History", route: "/payment-history" },
         { icon: "headset-outline", label: "Help Center" }
     ];
 
