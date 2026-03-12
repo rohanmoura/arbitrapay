@@ -263,19 +263,16 @@ export default function SecurityDeposit() {
 
                         <View style={styles.accountCard}>
                             <Text style={styles.accountTitle}>Saving</Text>
-                            <Text style={styles.accountPercent}>5.8%</Text>
                             <Text style={styles.accountMin}>Min ₹5,000</Text>
                         </View>
 
                         <View style={styles.accountCard}>
                             <Text style={styles.accountTitle}>Current</Text>
-                            <Text style={styles.accountPercent}>4.8%</Text>
                             <Text style={styles.accountMin}>Min ₹15,000</Text>
                         </View>
 
                         <View style={styles.accountCard}>
                             <Text style={styles.accountTitle}>Corporate</Text>
-                            <Text style={styles.accountPercent}>3.8%</Text>
                             <Text style={styles.accountMin}>Min ₹45,000</Text>
                         </View>
 

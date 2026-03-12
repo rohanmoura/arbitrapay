@@ -136,7 +136,10 @@ export default function WalletCard() {
               <Text style={styles.depositText}>Add Money</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.withdrawBtn}>
+            <TouchableOpacity
+              style={styles.withdrawBtn}
+              onPress={() => router.push("/withdrawal" as Href)}
+            >
               <Ionicons
                 name="arrow-down-circle-outline"
                 size={18}

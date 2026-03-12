@@ -212,13 +212,6 @@ export const styles = StyleSheet.create({
         fontSize: 12
     },
 
-    accountPercent: {
-        color: "#7C9CFF",
-        fontSize: 18,
-        fontWeight: "700",
-        marginTop: 4
-    },
-
     accountMin: {
         color: "#6B7280",
         fontSize: 11,

@@ -42,7 +42,11 @@ export default function Sidebar({ visible, onClose }: Props) {
             route: "/security-deposit"
         },
         { icon: "business-outline", label: "Linked Banks" },
-        { icon: "arrow-down-outline", label: "Withdraw Funds" },
+        {
+            icon: "arrow-down-outline",
+            label: "Withdraw Funds",
+            route: "/withdrawal"
+        },
         { icon: "swap-horizontal-outline", label: "Payment History" },
         { icon: "headset-outline", label: "Help Center" }
     ];
