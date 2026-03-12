@@ -256,7 +256,7 @@ export default function SecurityDeposit() {
                     {/* COMMISSION INFO */}
 
                     <Text style={styles.commissionTitle}>
-                        Commission Structure
+                        Deposit Structure
                     </Text>
 
                     <View style={styles.commissionBox}>

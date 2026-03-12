@@ -34,6 +34,7 @@ export default function Sidebar({ visible, onClose }: Props) {
     }, [visible, slide]);
 
     const tabs = [
+        { icon: "megaphone-outline", label: "Updates", route: "/updates" },
         { icon: "shield-checkmark-outline", label: "Verify Account", route: "/account-activation" },
         { icon: "pulse-outline", label: "Live Activity", route: "/live-deposit" },
         {
