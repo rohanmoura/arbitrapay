@@ -49,7 +49,7 @@ export default function Sidebar({ visible, onClose }: Props) {
             route: "/withdrawal"
         },
         { icon: "swap-horizontal-outline", label: "Payment History", route: "/payment-history" },
-        { icon: "headset-outline", label: "Help Center" }
+        { icon: "headset-outline", label: "Help Center", route: "/help-center" }
     ];
 
     return (

@@ -15,7 +15,7 @@ export default function OtherResources() {
       <View style={styles.row}>
 
         {/* UPDATES */}
-        <TouchableOpacity style={styles.card} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.card} activeOpacity={0.85} onPress={() => router.push("/updates" as Href)}>
 
           <View style={[styles.iconBox, styles.blue]}>
             <Ionicons name="megaphone-outline" size={18} color="#4DA3FF" />
