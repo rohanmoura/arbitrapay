@@ -35,7 +35,7 @@ export default function Sidebar({ visible, onClose }: Props) {
 
     const tabs = [
         { icon: "shield-checkmark-outline", label: "Verify Account", route: "/account-activation" },
-        { icon: "pulse-outline", label: "Live Activity" },
+        { icon: "pulse-outline", label: "Live Activity", route: "/live-deposit" },
         {
             icon: "lock-closed-outline",
             label: "Security Wallet",
