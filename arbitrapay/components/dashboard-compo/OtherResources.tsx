@@ -1,8 +1,11 @@
 import { styles } from "@/screens/dashboard/OtherResources.styles";
 import { Ionicons } from "@expo/vector-icons";
+import { Href, useRouter } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
 
 export default function OtherResources() {
+
+  const router = useRouter();
 
   return (
     <View style={styles.container}>
@@ -40,14 +43,16 @@ export default function OtherResources() {
 
 
         {/* AI ASSISTANT */}
-        <TouchableOpacity style={styles.card} activeOpacity={0.85}>
-
+        <TouchableOpacity
+          style={styles.card}
+          activeOpacity={0.85}
+          onPress={() => router.push("/ai-assistant" as Href)}
+        >
           <View style={[styles.iconBox, styles.purple]}>
             <Ionicons name="sparkles-outline" size={18} color="#B084F5" />
           </View>
 
           <Text style={styles.label}>AI Assistant</Text>
-
         </TouchableOpacity>
 
       </View>
