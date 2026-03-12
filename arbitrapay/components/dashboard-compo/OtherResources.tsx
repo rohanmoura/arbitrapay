@@ -31,7 +31,7 @@ export default function OtherResources() {
 
 
         {/* REFERRALS */}
-        <TouchableOpacity style={styles.card} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.card} activeOpacity={0.85} onPress={() => router.push("/referral" as Href)}>
 
           <View style={[styles.iconBox, styles.green]}>
             <Ionicons name="people-outline" size={18} color="#3DDC97" />
