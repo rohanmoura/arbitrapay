@@ -322,6 +322,7 @@ export const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "#27314F",
         width: "100%",
+        height: "90%",
         maxHeight: "90%"
     },
 

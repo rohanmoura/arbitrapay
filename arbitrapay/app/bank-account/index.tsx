@@ -1,10 +1,12 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
+import { useBankAccounts } from "@/hooks/useBankAccounts";
 import { styles } from "@/screens/feature-compo/BankAccount.style";
+import { BankAccountRecord } from "@/services/bankAccountService";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import {
-    Alert,
+    ActivityIndicator,
     KeyboardAvoidingView,
     Modal,
     Platform,
@@ -16,131 +18,77 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type BankAccount = {
-    id: string;
-    holder: string;
-    bank: string;
-    accountNumber: string;
-    ifsc: string;
-    isPrimary: boolean;
-};
-
 export default function BankAccounts() {
 
     const router = useRouter();
-
-    const [loading, setLoading] = useState(false);
-    const [toast, setToast] = useState("");
-    const [modalVisible, setModalVisible] = useState(false);
-
-    const [accounts, setAccounts] = useState<BankAccount[]>([]);
-
-    const [holder, setHolder] = useState("");
-    const [accountNumber, setAccountNumber] = useState("");
-    const [ifsc, setIfsc] = useState("");
-    const [bank, setBank] = useState("");
-    const [showAccount, setShowAccount] = useState<string | null>(null);
     const holderRef = useRef<TextInput>(null);
-    const [errors, setErrors] = useState({
-        holder: "",
-        accountNumber: "",
-        ifsc: "",
-        bank: ""
-    });
+    const {
+        loading,
+        submitting,
+        modalVisible,
+        toast,
+        accounts,
+        holder,
+        accountNumber,
+        ifsc,
+        bank,
+        errors,
+        showAccount,
+        deletingId,
+        settingPrimaryId,
+        setHolder,
+        setAccountNumber,
+        setIfsc,
+        setBank,
+        setErrors,
+        setShowAccount,
+        openModal,
+        closeModal,
+        submitAccount,
+        confirmDelete,
+        makePrimary,
+    } = useBankAccounts();
 
-    const handleAddAccount = async () => {
-
-        const newErrors: any = {};
-
-        if (!holder) newErrors.holder = "Account holder name is required";
-        if (accountNumber.length < 10) newErrors.accountNumber = "Account number must be 10 digits";
-        if (ifsc.length !== 11) newErrors.ifsc = "Invalid IFSC code";
-        if (!bank) newErrors.bank = "Bank name required";
-
-        setErrors(newErrors);
-
-        if (Object.keys(newErrors).length > 0) {
-            return;
-        }
-
-        setLoading(true);
-
-        await new Promise((resolve) => setTimeout(resolve, 600));
-
-        const newAccount: BankAccount = {
-            id: Date.now().toString(),
-            holder,
-            accountNumber,
-            ifsc,
-            bank,
-            isPrimary: accounts.length === 0
-        };
-
-        setAccounts([...accounts, newAccount]);
-
-        setHolder("");
-        setAccountNumber("");
-        setIfsc("");
-        setBank("");
-
-        setModalVisible(false);
-
-        setToast("Bank account added");
-
-        setTimeout(() => setToast(""), 2000);
-
-        setLoading(false);
-
+    const openAddModal = () => {
+        openModal();
+        setTimeout(() => holderRef.current?.focus(), 200);
     };
 
-    const removeAccount = (id: string) => {
+    const isBusy = submitting || Boolean(deletingId) || Boolean(settingPrimaryId);
 
-        const updated = accounts.filter(a => a.id !== id);
+    const renderDeleteButton = (account: BankAccountRecord) => {
+        const isDeleting = deletingId === account.id;
 
-        if (updated.length > 0 && !updated.some(a => a.isPrimary)) {
-            updated[0].isPrimary = true;
-        }
+        return (
+            <TouchableOpacity
+                style={styles.deleteBtn}
+                onPress={() => confirmDelete(account.id)}
+                disabled={isBusy}
+            >
 
-        setAccounts(updated);
+                {isDeleting ? (
+                    <ActivityIndicator size="small" color="#EF4444" />
+                ) : (
+                    <>
+                        <Ionicons name="trash-outline" size={16} color="#EF4444" />
 
-    };
+                        <Text style={styles.deleteText}>
+                            Delete
+                        </Text>
+                    </>
+                )}
 
-    const handleDelete = (id: string) => {
-
-        Alert.alert(
-            "Delete Bank Account",
-            "Are you sure you want to remove this bank account?",
-            [
-                {
-                    text: "Cancel",
-                    style: "cancel"
-                },
-                {
-                    text: "Delete",
-                    style: "destructive",
-                    onPress: () => removeAccount(id)
-                }
-            ]
+            </TouchableOpacity>
         );
-
     };
 
-    const setPrimary = (id: string) => {
-
-        const updated = accounts.map(acc => ({
-            ...acc,
-            isPrimary: acc.id === id
-        }));
-
-        setAccounts(updated);
-
-    };
+    if (loading) {
+        return <FullScreenLoader />;
+    }
 
     return (
 
         <SafeAreaView style={styles.safeArea}>
-
-            {loading && <FullScreenLoader />}
 
             <ScrollView
                 showsVerticalScrollIndicator={false}
@@ -179,10 +127,7 @@ export default function BankAccounts() {
 
                     <TouchableOpacity
                         style={styles.addTopBtn}
-                        onPress={() => {
-                            setModalVisible(true);
-                            setTimeout(() => holderRef.current?.focus(), 200);
-                        }}
+                        onPress={openAddModal}
                     >
 
                         <Ionicons name="add" size={18} color="#fff" />
@@ -216,10 +161,7 @@ export default function BankAccounts() {
 
                             <TouchableOpacity
                                 style={styles.addBtn}
-                                onPress={() => {
-                                    setModalVisible(true);
-                                    setTimeout(() => holderRef.current?.focus(), 200);
-                                }}
+                                onPress={openAddModal}
                             >
 
                                 <Ionicons name="add" size={18} color="#fff" />
@@ -241,10 +183,11 @@ export default function BankAccounts() {
                             key={account.id}
                             style={[
                                 styles.bankCard,
-                                account.isPrimary && styles.bankCardSelected
+                                account.is_default && styles.bankCardSelected
                             ]}
-                            onPress={() => setPrimary(account.id)}
+                            onPress={() => makePrimary(account.id)}
                             activeOpacity={0.85}
+                            disabled={isBusy}
                         >
 
                             <View style={styles.bankIcon}>
@@ -255,12 +198,12 @@ export default function BankAccounts() {
 
                                 <View style={styles.bankRow}>
                                     <Text style={styles.bankName}>
-                                        {account.bank}
+                                        {account.bank_name}
                                     </Text>
 
                                     <View style={{ flex: 1 }} />
 
-                                    {account.isPrimary && (
+                                    {account.is_default && (
                                         <View style={styles.primaryTag}>
                                             <Text style={styles.primaryText}>
                                                 Primary
@@ -270,15 +213,15 @@ export default function BankAccounts() {
                                 </View>
 
                                 <Text style={styles.bankHolder}>
-                                    {account.holder}
+                                    {account.account_holder_name}
                                 </Text>
 
                                 <View style={styles.accountRow}>
 
                                     <Text style={styles.bankMeta}>
                                         A/C {showAccount === account.id
-                                            ? account.accountNumber
-                                            : `****${account.accountNumber.slice(-4)}`}
+                                            ? account.account_number
+                                            : `****${account.account_number.slice(-4)}`}
                                     </Text>
 
                                     <TouchableOpacity
@@ -287,6 +230,7 @@ export default function BankAccounts() {
                                                 showAccount === account.id ? null : account.id
                                             )
                                         }
+                                        disabled={isBusy}
                                     >
                                         <Ionicons
                                             name={showAccount === account.id ? "eye-off-outline" : "eye-outline"}
@@ -298,38 +242,32 @@ export default function BankAccounts() {
                                 </View>
 
                                 <Text style={styles.bankMeta}>
-                                    IFSC {account.ifsc}
+                                    IFSC {account.ifsc_code}
                                 </Text>
 
                                 <View style={styles.bankActions}>
 
-                                    {!account.isPrimary && (
+                                    {!account.is_default && (
 
                                         <TouchableOpacity
                                             style={styles.primaryBtn}
-                                            onPress={() => setPrimary(account.id)}
+                                            onPress={() => makePrimary(account.id)}
+                                            disabled={isBusy}
                                         >
 
-                                            <Text style={styles.primaryBtnText}>
-                                                Make Primary
-                                            </Text>
+                                            {settingPrimaryId === account.id ? (
+                                                <ActivityIndicator size="small" color="#8EA2FF" />
+                                            ) : (
+                                                <Text style={styles.primaryBtnText}>
+                                                    Make Primary
+                                                </Text>
+                                            )}
 
                                         </TouchableOpacity>
 
                                     )}
 
-                                    <TouchableOpacity
-                                        style={styles.deleteBtn}
-                                        onPress={() => handleDelete(account.id)}
-                                    >
-
-                                        <Ionicons name="trash-outline" size={16} color="#EF4444" />
-
-                                        <Text style={styles.deleteText}>
-                                            Delete
-                                        </Text>
-
-                                    </TouchableOpacity>
+                                    {renderDeleteButton(account)}
 
                                 </View>
 
@@ -394,7 +332,7 @@ export default function BankAccounts() {
                                         Add Bank Account
                                     </Text>
 
-                                    <TouchableOpacity onPress={() => setModalVisible(false)}>
+                                    <TouchableOpacity onPress={closeModal} disabled={submitting}>
                                         <Ionicons name="close" size={22} color="#fff" />
                                     </TouchableOpacity>
 
@@ -420,6 +358,7 @@ export default function BankAccounts() {
                                         setHolder(text);
                                         setErrors(prev => ({ ...prev, holder: "" }));
                                     }}
+                                    editable={!submitting}
                                 />
                                 {errors.holder ? (
                                     <Text style={styles.errorText}>{errors.holder}</Text>
@@ -435,12 +374,13 @@ export default function BankAccounts() {
                                     placeholder="Enter account number"
                                     placeholderTextColor="#6B7280"
                                     value={accountNumber}
-                                    maxLength={10}
+                                    maxLength={18}
                                     onChangeText={(text) => {
                                         const digits = text.replace(/[^0-9]/g, "");
                                         setAccountNumber(digits);
                                         setErrors(prev => ({ ...prev, accountNumber: "" }));
                                     }}
+                                    editable={!submitting}
                                 />
                                 {errors.accountNumber ? (
                                     <Text style={styles.errorText}>{errors.accountNumber}</Text>
@@ -464,6 +404,7 @@ export default function BankAccounts() {
                                         setIfsc(clean);
                                         setErrors(prev => ({ ...prev, ifsc: "" }));
                                     }}
+                                    editable={!submitting}
                                 />
                                 {errors.ifsc ? (
                                     <Text style={styles.errorText}>{errors.ifsc}</Text>
@@ -482,7 +423,7 @@ export default function BankAccounts() {
                                     placeholderTextColor="#6B7280"
                                     value={bank}
                                     autoCapitalize="words"
-                                    editable={true}
+                                    editable={!submitting}
                                     onChangeText={(text) => {
                                         setBank(text);
                                         setErrors(prev => ({ ...prev, bank: "" }));
@@ -497,13 +438,17 @@ export default function BankAccounts() {
                                         styles.submitBtn,
                                         (!holder || accountNumber.length < 10 || ifsc.length < 11 || !bank) && styles.submitDisabled
                                     ]}
-                                    disabled={!holder || accountNumber.length < 10 || ifsc.length < 11 || !bank}
-                                    onPress={handleAddAccount}
+                                    disabled={!holder || accountNumber.length < 10 || ifsc.length < 11 || !bank || submitting}
+                                    onPress={submitAccount}
                                 >
 
-                                    <Text style={styles.submitText}>
-                                        Add Account
-                                    </Text>
+                                    {submitting ? (
+                                        <ActivityIndicator size="small" color="#fff" />
+                                    ) : (
+                                        <Text style={styles.submitText}>
+                                            Add Account
+                                        </Text>
+                                    )}
 
                                 </TouchableOpacity>
                             </ScrollView>
