@@ -1,11 +1,12 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
+import { TELEGRAM_CHANNEL_URL } from "@/components/FloatingTelegramButton";
+import { useSecurityDeposit } from "@/hooks/useSecurityDeposit";
 import { styles } from "@/screens/feature-compo/SecurityDeposit.styles";
 import { Ionicons } from "@expo/vector-icons";
-import * as Clipboard from "expo-clipboard";
-import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import * as Linking from "expo-linking";
 import {
+    ActivityIndicator,
     Image,
     ScrollView,
     Text,
@@ -17,79 +18,52 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SecurityDeposit() {
 
-    const [amount, setAmount] = useState("");
-    const [utr, setUtr] = useState("");
-    const [method, setMethod] = useState<"upi" | "bank">("upi");
-    const [screenshot, setScreenshot] = useState<string | null>(null);
-    const [toast, setToast] = useState("");
     const router = useRouter();
-
-    const [copied, setCopied] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const {
+        loading,
+        submitting,
+        pickingScreenshot,
+        amount,
+        utr,
+        method,
+        screenshot,
+        toast,
+        copied,
+        lastDeposit,
+        errors,
+        config,
+        setAmount,
+        setUtr,
+        setMethod,
+        setErrors,
+        copyUpi,
+        pickScreenshot,
+        submitDeposit,
+    } = useSecurityDeposit();
 
     const quickAmounts = ["5000", "10000", "20000", "50000"];
 
     const isValid =
         amount &&
         Number(amount) >= 5000 &&
-        utr.length >= 12;
+        utr.trim().length > 0 &&
+        Boolean(screenshot);
 
-    const copyUpi = async () => {
+    const openTelegram = async () => {
+        const supported = await Linking.canOpenURL(TELEGRAM_CHANNEL_URL);
 
-        await Clipboard.setStringAsync("himanshu8540@ptyes");
-
-        setCopied(true);
-        setToast("UPI ID copied");
-
-        setTimeout(() => {
-            setCopied(false);
-            setToast("");
-        }, 2000);
-
-    };
-
-    const pickScreenshot = async () => {
-
-        try {
-
-            setLoading(true);
-
-            const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                quality: 0.7,
-            });
-
-            if (!result.canceled) {
-                setScreenshot(result.assets[0].uri);
-            }
-
-        } finally {
-            setLoading(false);
+        if (supported) {
+            await Linking.openURL(TELEGRAM_CHANNEL_URL);
         }
-
     };
 
-    const submitDeposit = async () => {
-
-        try {
-
-            setLoading(true);
-
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            setToast("Deposit request submitted");
-
-        } finally {
-            setLoading(false);
-        }
-
-    };
+    if (loading) {
+        return <FullScreenLoader />;
+    }
 
     return (
 
         <SafeAreaView style={{ flex: 1, backgroundColor: "#0B1220" }}>
-
-            {loading && <FullScreenLoader />}
 
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
@@ -127,7 +101,7 @@ export default function SecurityDeposit() {
 
                         <View>
                             <Text style={styles.metaLabel}>Last Deposit</Text>
-                            <Text style={styles.metaValue}>—</Text>
+                            <Text style={styles.metaValue}>{lastDeposit}</Text>
                         </View>
 
                         <View>
@@ -142,7 +116,7 @@ export default function SecurityDeposit() {
 
                 {/* TELEGRAM */}
 
-                <TouchableOpacity style={styles.telegramBtn}>
+                <TouchableOpacity style={styles.telegramBtn} onPress={openTelegram}>
                     <Ionicons name="paper-plane-outline" size={18} color="#8EA2FF" />
                     <Text style={styles.telegramText}>Join Telegram Channel</Text>
                 </TouchableOpacity>
@@ -169,6 +143,7 @@ export default function SecurityDeposit() {
                                 method === "upi" && styles.activeMethod
                             ]}
                             onPress={() => setMethod("upi")}
+                            disabled={submitting}
                         >
                             <Ionicons name="qr-code-outline" size={16} color="#fff" />
                             <Text style={styles.methodText}>UPI</Text>
@@ -181,6 +156,7 @@ export default function SecurityDeposit() {
                                 method === "bank" && styles.activeMethod
                             ]}
                             onPress={() => setMethod("bank")}
+                            disabled={submitting}
                         >
                             <Text style={styles.methodText}>Bank Transfer</Text>
                         </TouchableOpacity>
@@ -199,7 +175,7 @@ export default function SecurityDeposit() {
                             <View style={styles.upiRow}>
 
                                 <Text style={styles.upiId}>
-                                    himanshu8540@ptyes
+                                    {config.upiId}
                                 </Text>
 
                                 <TouchableOpacity style={styles.copyBtn} onPress={copyUpi}>
@@ -224,13 +200,13 @@ export default function SecurityDeposit() {
                         <View style={styles.bankBox}>
 
                             <Text style={styles.bankLabel}>Account Number</Text>
-                            <Text style={styles.bankValue}>XXXXXX1234</Text>
+                            <Text style={styles.bankValue}>{config.bankTransfer.accountNumber}</Text>
 
                             <Text style={styles.bankLabel}>IFSC Code</Text>
-                            <Text style={styles.bankValue}>HDFC0001234</Text>
+                            <Text style={styles.bankValue}>{config.bankTransfer.ifscCode}</Text>
 
                             <Text style={styles.bankLabel}>Bank Name</Text>
-                            <Text style={styles.bankValue}>HDFC Bank</Text>
+                            <Text style={styles.bankValue}>{config.bankTransfer.bankName}</Text>
 
                         </View>
 
@@ -289,8 +265,16 @@ export default function SecurityDeposit() {
                         placeholderTextColor="#6B7280"
                         keyboardType="numeric"
                         value={amount}
-                        onChangeText={setAmount}
+                        editable={!submitting}
+                        onChangeText={(text) => {
+                            const digits = text.replace(/[^0-9]/g, "");
+                            setAmount(digits);
+                            setErrors((current) => ({ ...current, amount: "" }));
+                        }}
                     />
+                    {errors.amount ? (
+                        <Text style={styles.errorText}>{errors.amount}</Text>
+                    ) : null}
 
 
                     {/* QUICK AMOUNTS */}
@@ -302,7 +286,11 @@ export default function SecurityDeposit() {
                             <TouchableOpacity
                                 key={val}
                                 style={styles.quickBtn}
-                                onPress={() => setAmount(val)}
+                                onPress={() => {
+                                    setAmount(val);
+                                    setErrors((current) => ({ ...current, amount: "" }));
+                                }}
+                                disabled={submitting}
                             >
                                 <Text style={styles.quickText}>₹{val}</Text>
                             </TouchableOpacity>
@@ -330,8 +318,16 @@ export default function SecurityDeposit() {
                         keyboardType="numeric"
                         value={utr}
                         maxLength={12}
-                        onChangeText={setUtr}
+                        editable={!submitting}
+                        onChangeText={(text) => {
+                            const digits = text.replace(/[^0-9]/g, "");
+                            setUtr(digits);
+                            setErrors((current) => ({ ...current, utr: "" }));
+                        }}
                     />
+                    {errors.utr ? (
+                        <Text style={styles.errorText}>{errors.utr}</Text>
+                    ) : null}
 
 
                     {/* UPLOAD */}
@@ -339,6 +335,7 @@ export default function SecurityDeposit() {
                     <TouchableOpacity
                         style={styles.uploadBox}
                         onPress={pickScreenshot}
+                        disabled={submitting || pickingScreenshot}
                     >
 
                         {screenshot ? (
@@ -357,11 +354,15 @@ export default function SecurityDeposit() {
                         ) : (
 
                             <>
-                                <Ionicons
-                                    name="cloud-upload-outline"
-                                    size={34}
-                                    color="#8B5CF6"
-                                />
+                                {pickingScreenshot ? (
+                                    <ActivityIndicator size="large" color="#8B5CF6" />
+                                ) : (
+                                    <Ionicons
+                                        name="cloud-upload-outline"
+                                        size={34}
+                                        color="#8B5CF6"
+                                    />
+                                )}
 
                                 <Text style={styles.uploadText}>
                                     Upload Payment Screenshot
@@ -375,6 +376,9 @@ export default function SecurityDeposit() {
                         )}
 
                     </TouchableOpacity>
+                    {errors.screenshot ? (
+                        <Text style={styles.errorText}>{errors.screenshot}</Text>
+                    ) : null}
 
 
 
@@ -400,15 +404,19 @@ export default function SecurityDeposit() {
                     <TouchableOpacity
                         style={[
                             styles.submitBtn,
-                            !isValid && styles.submitDisabled
+                            (!isValid || submitting || pickingScreenshot) && styles.submitDisabled
                         ]}
-                        disabled={!isValid}
+                        disabled={!isValid || submitting || pickingScreenshot}
                         onPress={submitDeposit}
                     >
 
-                        <Text style={styles.submitText}>
-                            Submit Deposit Request
-                        </Text>
+                        {submitting ? (
+                            <ActivityIndicator size="small" color="#FFFFFF" />
+                        ) : (
+                            <Text style={styles.submitText}>
+                                Submit Deposit Request
+                            </Text>
+                        )}
 
                     </TouchableOpacity>
 

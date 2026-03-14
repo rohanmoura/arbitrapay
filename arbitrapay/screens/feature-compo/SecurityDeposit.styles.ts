@@ -238,6 +238,13 @@ export const styles = StyleSheet.create({
         backgroundColor: "#0F1426"
     },
 
+    errorText: {
+        color: "#EF4444",
+        fontSize: 12,
+        marginTop: -6,
+        marginBottom: 8
+    },
+
     /* QUICK AMOUNTS */
 
     quickRow: {

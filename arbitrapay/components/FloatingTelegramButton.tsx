@@ -14,6 +14,8 @@ type Props = {
   scrollY?: Animated.Value;
 };
 
+export const TELEGRAM_CHANNEL_URL = "https://t.me/arbitraagent";
+
 export default function FloatingTelegramButton({ scrollY }: Props) {
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -92,11 +94,10 @@ export default function FloatingTelegramButton({ scrollY }: Props) {
   const openTelegram = async () => {
     if (disabled) return;
 
-    const url = "https://t.me/arbitraagent";
-    const supported = await Linking.canOpenURL(url);
+    const supported = await Linking.canOpenURL(TELEGRAM_CHANNEL_URL);
 
     if (supported) {
-      await Linking.openURL(url);
+      await Linking.openURL(TELEGRAM_CHANNEL_URL);
     }
   };
 
