@@ -1,3 +1,4 @@
+import { handleLogout } from "@/lib/logout";
 import { styles } from "@/screens/dashboard/Sidebar.styles";
 import { Ionicons } from "@expo/vector-icons";
 import { usePathname, useRouter } from "expo-router";
@@ -118,7 +119,13 @@ export default function Sidebar({ visible, onClose }: Props) {
 
                 {/* LOGOUT BUTTON */}
                 <View style={styles.logoutContainer}>
-                    <TouchableOpacity style={styles.logoutBtn} activeOpacity={0.8}>
+                    <TouchableOpacity
+                        style={styles.logoutBtn}
+                        activeOpacity={0.8}
+                        onPress={async () => {
+                            await handleLogout();
+                        }}
+                    >
                         <Ionicons
                             name="log-out-outline"
                             size={20}

@@ -108,4 +108,8 @@ export const styles = StyleSheet.create({
         marginTop: 2
     },
 
+    disabledButton: {
+        opacity: 0.7
+    },
+
 });

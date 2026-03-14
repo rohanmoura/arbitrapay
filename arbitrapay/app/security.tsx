@@ -1,12 +1,36 @@
+import { handleLogout } from "@/lib/logout";
 import { styles } from "@/screens/security/Security.styles";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useState } from "react";
+import {
+    ActivityIndicator,
+    ScrollView,
+    Text,
+    TouchableOpacity,
+    View
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Security() {
 
     const router = useRouter();
+    const [loggingOut, setLoggingOut] = useState(false);
+
+    const logoutForAnotherAccount = async () => {
+        if (loggingOut) {
+            return;
+        }
+
+        setLoggingOut(true);
+
+        try {
+            await handleLogout();
+
+        } finally {
+            setLoggingOut(false);
+        }
+    };
 
     return (
 
@@ -41,7 +65,7 @@ export default function Security() {
                         <View style={{ flex: 1 }}>
                             <Text style={styles.securityTitle}>Account Protected</Text>
                             <Text style={styles.securitySub}>
-                                Google authentication and phone verification enabled
+                                Google authentication and Gmail verification enabled
                             </Text>
                         </View>
 
@@ -61,54 +85,24 @@ export default function Security() {
                         </View>
 
                         <View style={styles.row}>
-                            <Ionicons name="phone-portrait" size={18} color="#8B5CF6" />
-                            <Text style={styles.rowText}>Phone Verification</Text>
+                            <Ionicons name="mail-open-outline" size={18} color="#8B5CF6" />
+                            <Text style={styles.rowText}>Gmail Verification</Text>
                             <Text style={styles.status}>Verified</Text>
                         </View>
 
                         {/* ADD ACCOUNT */}
 
-                        <TouchableOpacity style={styles.addBtn}>
+                        <TouchableOpacity
+                            style={[styles.addBtn, loggingOut && styles.disabledButton]}
+                            onPress={logoutForAnotherAccount}
+                            disabled={loggingOut}
+                        >
                             <Ionicons name="add-circle-outline" size={18} color="#8B5CF6" />
-                            <Text style={styles.addText}>Add Another Account</Text>
-                        </TouchableOpacity>
-
-                    </View>
-
-
-                    {/* SECURITY SETTINGS */}
-
-                    <View style={styles.card}>
-
-                        <Text style={styles.sectionTitle}>Security Settings</Text>
-
-                        <TouchableOpacity
-                            style={styles.row}
-                            onPress={() => router.push({ pathname: "/security/biometric" })}
-                        >
-                            <Ionicons name="finger-print" size={18} color="#8B5CF6" />
-                            <Text style={styles.rowText}>Biometric Lock</Text>
-                            <Ionicons name="chevron-forward" size={16} color="#6B7280" />
-                        </TouchableOpacity>
-
-
-                        <TouchableOpacity
-                            style={styles.row}
-                            onPress={() => router.push({ pathname: "/security/pin" })}
-                        >
-                            <Ionicons name="key" size={18} color="#8B5CF6" />
-                            <Text style={styles.rowText}>Transaction PIN</Text>
-                            <Ionicons name="chevron-forward" size={16} color="#6B7280" />
-                        </TouchableOpacity>
-
-
-                        <TouchableOpacity
-                            style={styles.row}
-                            onPress={() => router.push({ pathname: "/security/devices" })}
-                        >
-                            <Ionicons name="phone-portrait" size={18} color="#8B5CF6" />
-                            <Text style={styles.rowText}>Active Devices</Text>
-                            <Ionicons name="chevron-forward" size={16} color="#6B7280" />
+                            {loggingOut ? (
+                                <ActivityIndicator size="small" color="#8B5CF6" />
+                            ) : (
+                                <Text style={styles.addText}>Add Another Account</Text>
+                            )}
                         </TouchableOpacity>
 
                     </View>

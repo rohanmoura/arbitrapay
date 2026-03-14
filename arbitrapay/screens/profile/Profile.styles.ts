@@ -89,9 +89,12 @@ export const styles = StyleSheet.create({
         backgroundColor: "#0B1220",
         borderRadius: 12,
         paddingHorizontal: 14,
+        paddingVertical: 12,
         justifyContent: "center",
         borderWidth: 1,
-        borderColor: "#1F2937"
+        borderColor: "#1F2937",
+        minWidth: 72,
+        alignItems: "center"
     },
 
     codeText: {
@@ -178,6 +181,10 @@ export const styles = StyleSheet.create({
         color: "#6B7280",
         marginTop: 10,
         fontSize: 12
+    },
+
+    disabledButton: {
+        opacity: 0.7
     }
 
 

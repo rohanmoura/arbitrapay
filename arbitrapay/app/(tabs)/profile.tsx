@@ -1,8 +1,10 @@
 import { styles } from "@/screens/profile/Profile.styles";
+import FullScreenLoader from "@/components/FullScreenLoader";
+import { useProfile } from "@/hooks/useProfile";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   ScrollView,
   Text,
@@ -12,23 +14,27 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const COUNTRY_CODES = ["+91", "+1", "+44", "+971"];
-
 export default function Profile() {
-
-  const [name, setName] = useState("User");
-  const [email] = useState("user@email.com");
-  const [phone, setPhone] = useState("");
-  const [countryCode, setCountryCode] = useState("+91");
-  const [showCodes, setShowCodes] = useState(false);
   const router = useRouter();
+  const {
+    profile,
+    loading,
+    saving,
+    loggingOut,
+    uploadingAvatar,
+    setName,
+    setPhone,
+    saveProfile,
+    pickAvatar,
+    logout,
+  } = useProfile();
+  const avatarSource = profile.avatar
+    ? { uri: profile.avatar }
+    : require("@/assets/images/icon.png");
 
-  const avatar = "https://i.pravatar.cc/300";
-
-  const handlePhoneChange = (text: string) => {
-    const cleaned = text.replace(/[^0-9]/g, "");
-    if (cleaned.length <= 10) setPhone(cleaned);
-  };
+  if (loading) {
+    return <FullScreenLoader />;
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -43,14 +49,22 @@ export default function Profile() {
           <View style={styles.profileCard}>
 
             <View style={styles.avatarWrapper}>
-              <Image source={{ uri: avatar }} style={styles.avatar} />
+              <Image source={avatarSource} style={styles.avatar} />
 
-              <TouchableOpacity style={styles.editAvatar}>
-                <Ionicons name="camera" size={16} color="#fff" />
+              <TouchableOpacity
+                style={styles.editAvatar}
+                onPress={pickAvatar}
+                disabled={uploadingAvatar || saving || loggingOut}
+              >
+                {uploadingAvatar ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Ionicons name="camera" size={16} color="#fff" />
+                )}
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.email}>{email}</Text>
+            <Text style={styles.email}>{profile.email}</Text>
 
           </View>
 
@@ -64,17 +78,18 @@ export default function Profile() {
             <Text style={styles.label}>Full Name</Text>
 
             <TextInput
-              value={name}
+              value={profile.name}
               onChangeText={setName}
               placeholder="Your full name"
               placeholderTextColor="#6B7280"
               style={styles.input}
+              editable={!saving && !loggingOut && !uploadingAvatar}
             />
 
             <Text style={styles.label}>Email</Text>
 
             <TextInput
-              value={email}
+              value={profile.email}
               editable={false}
               style={[styles.input, { opacity: 0.6 }]}
             />
@@ -83,41 +98,21 @@ export default function Profile() {
 
             <View style={styles.phoneContainer}>
 
-              <TouchableOpacity
-                style={styles.codeBox}
-                onPress={() => setShowCodes(!showCodes)}
-              >
-                <Text style={styles.codeText}>{countryCode}</Text>
-                <Ionicons name="chevron-down" size={14} color="#9CA3AF" />
-              </TouchableOpacity>
+              <View style={styles.codeBox}>
+                <Text style={styles.codeText}>+91</Text>
+              </View>
 
               <TextInput
-                value={phone}
-                onChangeText={handlePhoneChange}
+                value={profile.phone}
+                onChangeText={setPhone}
                 placeholder="9876543210"
                 placeholderTextColor="#6B7280"
                 keyboardType="number-pad"
                 style={styles.phoneInput}
+                editable={!saving && !loggingOut && !uploadingAvatar}
               />
 
             </View>
-
-            {showCodes && (
-              <View style={styles.codeDropdown}>
-                {COUNTRY_CODES.map((code) => (
-                  <TouchableOpacity
-                    key={code}
-                    onPress={() => {
-                      setCountryCode(code);
-                      setShowCodes(false);
-                    }}
-                    style={styles.codeItem}
-                  >
-                    <Text style={styles.codeItemText}>{code}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
 
           </View>
 
@@ -151,31 +146,53 @@ export default function Profile() {
 
             <Text style={styles.sectionTitle}>Support</Text>
 
-            <View style={styles.row}>
+            <TouchableOpacity
+              style={styles.row}
+              onPress={() => router.push("/help-center")}
+            >
               <Ionicons name="help-circle" size={18} color="#8B5CF6" />
               <Text style={styles.rowText}>Help Center</Text>
-            </View>
+            </TouchableOpacity>
 
-            <View style={styles.row}>
+            <TouchableOpacity
+              style={styles.row}
+              onPress={() => router.push("/help-center")}
+            >
               <Ionicons name="mail" size={18} color="#8B5CF6" />
               <Text style={styles.rowText}>Contact Support</Text>
-            </View>
+            </TouchableOpacity>
 
           </View>
 
 
           {/* SAVE */}
 
-          <TouchableOpacity style={styles.saveBtn}>
-            <Text style={styles.saveText}>Save Changes</Text>
+          <TouchableOpacity
+            style={[styles.saveBtn, (saving || loggingOut || uploadingAvatar) && styles.disabledButton]}
+            onPress={saveProfile}
+            disabled={saving || loggingOut || uploadingAvatar}
+          >
+            {saving ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.saveText}>Save Changes</Text>
+            )}
           </TouchableOpacity>
 
 
           {/* LOGOUT */}
 
-          <TouchableOpacity style={styles.logout}>
+          <TouchableOpacity
+            style={[styles.logout, loggingOut && styles.disabledButton]}
+            onPress={logout}
+            disabled={loggingOut || saving || uploadingAvatar}
+          >
             <Ionicons name="log-out-outline" size={18} color="#EF4444" />
-            <Text style={styles.logoutText}>Logout</Text>
+            {loggingOut ? (
+              <ActivityIndicator size="small" color="#EF4444" />
+            ) : (
+              <Text style={styles.logoutText}>Logout</Text>
+            )}
           </TouchableOpacity>
 
 
