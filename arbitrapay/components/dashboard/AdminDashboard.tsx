@@ -26,56 +26,6 @@ const ADMIN_SECTIONS: AdminSidebarItem[] = [
   { key: "settings", label: "Settings", icon: "settings-outline" },
 ];
 
-// const SECTION_COPY: Record<
-//   AdminSection,
-//   {
-//     title: string;
-//     subtitle: string;
-//     icon: keyof typeof Ionicons.glyphMap;
-//   }
-// > = {
-//   dashboard: {
-//     title: "Admin Dashboard",
-//     subtitle: "Monitor the system and jump into core admin workflows.",
-//     icon: "grid-outline",
-//   },
-//   users: {
-//     title: "Users",
-//     subtitle: "User management tools will be added here next.",
-//     icon: "people-outline",
-//   },
-//   deposits: {
-//     title: "Deposits",
-//     subtitle: "Review incoming deposit requests and manage approval flow.",
-//     icon: "wallet-outline",
-//   },
-//   withdrawals: {
-//     title: "Withdrawals",
-//     subtitle: "Track and review withdrawal requests from the user panel.",
-//     icon: "arrow-down-circle-outline",
-//   },
-//   live_deposits: {
-//     title: "Live Deposits",
-//     subtitle: "Manage live credit and debit entries for activated accounts.",
-//     icon: "pulse-outline",
-//   },
-//   support_tickets: {
-//     title: "Support Tickets",
-//     subtitle: "Handle user issues and keep support response times tight.",
-//     icon: "headset-outline",
-//   },
-//   updates: {
-//     title: "Updates & Announcements",
-//     subtitle: "Publish important updates that users will see in their app.",
-//     icon: "megaphone-outline",
-//   },
-//   settings: {
-//     title: "Settings",
-//     subtitle: "Admin-level configuration and future system controls live here.",
-//     icon: "settings-outline",
-//   },
-// };
-
 export default function AdminDashboard() {
   const { profile } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
