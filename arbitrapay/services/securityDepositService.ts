@@ -1,4 +1,9 @@
 import { supabase } from "@/lib/supabase";
+import {
+  DEFAULT_SECURITY_DEPOSIT_CONFIG,
+  fetchDepositConfiguration,
+  type DepositConfiguration,
+} from "@/services/depositConfigService";
 
 export type DepositMethod = "UPI" | "BANK_TRANSFER";
 
@@ -19,16 +24,6 @@ type DepositBankAccount = {
   is_default: boolean | null;
   created_at: string | null;
 };
-
-export const SECURITY_DEPOSIT_CONFIG = {
-  upiId: "9625159323@pthdfc",
-  bankTransfer: {
-    accountHolderName: "Shanawaz Khan",
-    accountNumber: "50100607454408",
-    ifscCode: "HDFC0003370",
-    bankName: "HDFC Bank",
-  },
-} as const;
 
 const SECURITY_DEPOSIT_BUCKET =
   process.env.EXPO_PUBLIC_SUPABASE_SECURITY_DEPOSIT_BUCKET || "security-deposits";
@@ -66,6 +61,13 @@ export async function fetchLatestSecurityDeposit(userId: string) {
 
   return (data || null) as SecurityDepositRecord | null;
 }
+
+export async function fetchSecurityDepositConfiguration() {
+  return fetchDepositConfiguration();
+}
+
+export const SECURITY_DEPOSIT_CONFIG: DepositConfiguration =
+  DEFAULT_SECURITY_DEPOSIT_CONFIG;
 
 export async function fetchUserDepositBankAccount(userId: string) {
   const { data, error } = await supabase

@@ -10,6 +10,7 @@ import {
   createSecurityDepositRequest,
   DepositMethod,
   fetchLatestSecurityDeposit,
+  fetchSecurityDepositConfiguration,
   fetchUserDepositBankAccount,
   uploadSecurityDepositProof,
 } from "@/services/securityDepositService";
@@ -74,6 +75,7 @@ export function useSecurityDeposit() {
   const [copied, setCopied] = useState(false);
   const [lastDeposit, setLastDeposit] = useState("—");
   const [errors, setErrors] = useState<FormErrors>(EMPTY_ERRORS);
+  const [config, setConfig] = useState(SECURITY_DEPOSIT_CONFIG);
 
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -107,14 +109,19 @@ export function useSecurityDeposit() {
     setLoading(true);
 
     try {
-      const latest = await fetchLatestSecurityDeposit(session.user.id);
+      const [latest, depositConfig] = await Promise.all([
+        fetchLatestSecurityDeposit(session.user.id),
+        fetchSecurityDepositConfiguration(),
+      ]);
       setLastDeposit(formatDepositDate(latest?.created_at || null));
+      setConfig(depositConfig);
     } catch (error: any) {
       Alert.alert(
         "Security Deposit Error",
         error.message || "Unable to load your latest deposit."
       );
       setLastDeposit("—");
+      setConfig(SECURITY_DEPOSIT_CONFIG);
     } finally {
       setLoading(false);
     }
@@ -237,7 +244,7 @@ export function useSecurityDeposit() {
     copied,
     lastDeposit,
     errors,
-    config: SECURITY_DEPOSIT_CONFIG,
+    config,
     setAmount,
     setUtr,
     setMethod,

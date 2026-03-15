@@ -80,7 +80,8 @@ export default function LoginScreen() {
         return;
       }
 
-      router.replace("/(tabs)");
+      // Root layout already redirects based on auth session state.
+      // Avoid double navigation during account switching.
     } catch (err: any) {
       Alert.alert("Error", err.message ?? "Google login failed");
     } finally {
