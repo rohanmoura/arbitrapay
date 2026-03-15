@@ -1,25 +1,25 @@
-import { useState } from "react";
-import {
-  GoogleSignin,
-} from "@react-native-google-signin/google-signin";
-import {
-  View,
-  TextInput,
-  Text,
-  TouchableOpacity,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  Image,
-  ScrollView,
-} from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
 import { supabase } from "@/lib/supabase";
 import { styles } from "@/screens/auth/Login.styles";
 import { AppColors } from "@/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
+import {
+  GoogleSignin,
+} from "@react-native-google-signin/google-signin";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -80,8 +80,7 @@ export default function LoginScreen() {
         return;
       }
 
-      // Root layout already redirects based on auth session state.
-      // Avoid double navigation during account switching.
+      router.replace("/(tabs)");
     } catch (err: any) {
       Alert.alert("Error", err.message ?? "Google login failed");
     } finally {

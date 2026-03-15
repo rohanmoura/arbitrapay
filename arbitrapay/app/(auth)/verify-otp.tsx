@@ -11,7 +11,7 @@ import {
   Image,
   ScrollView,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { supabase } from "@/lib/supabase";
 import { AppColors } from "@/theme/colors";
@@ -94,8 +94,7 @@ export default function VerifyOtpScreen() {
       return;
     }
 
-    // Root layout already redirects based on auth session state.
-    // Avoid double navigation during account switching.
+    router.replace("/(tabs)");
   }
 
   async function handleResend() {
