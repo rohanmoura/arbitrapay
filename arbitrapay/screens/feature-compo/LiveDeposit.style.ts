@@ -163,4 +163,238 @@ export const styles = StyleSheet.create({
         lineHeight: 18
     },
 
+    liveHeroCard: {
+        backgroundColor: "#151A2E",
+        borderRadius: 22,
+        padding: 20,
+        marginBottom: 18,
+        borderWidth: 1,
+        borderColor: "#1F2937",
+        flexDirection: "row",
+        justifyContent: "space-between",
+        gap: 12
+    },
+
+    liveHeroLabel: {
+        color: "#7C8DB5",
+        fontSize: 12,
+        letterSpacing: 1
+    },
+
+    liveHeroTitle: {
+        color: "#fff",
+        fontSize: 20,
+        fontWeight: "700",
+        marginTop: 6
+    },
+
+    liveHeroDesc: {
+        color: "#94A3B8",
+        fontSize: 13,
+        marginTop: 8,
+        lineHeight: 20,
+        maxWidth: 240
+    },
+
+    liveHeroBadge: {
+        position: "absolute",
+        top: 10,
+        right: 5,
+        flexDirection: "row",
+        alignItems: "center",
+        alignSelf: "flex-start",
+        gap: 6,
+        backgroundColor: "#0F172A",
+        borderRadius: 999,
+        paddingHorizontal: 10,
+        paddingVertical: 6
+    },
+
+    liveHeroBadgeText: {
+        color: "#22C55E",
+        fontSize: 12,
+        fontWeight: "700"
+    },
+
+    selectorCard: {
+        backgroundColor: "#0F172A",
+        borderRadius: 18,
+        padding: 16,
+        marginBottom: 18,
+        borderWidth: 1,
+        borderColor: "#1F2937"
+    },
+
+    selectorLabel: {
+        color: "#E5E7EB",
+        fontSize: 14,
+        fontWeight: "600",
+        marginBottom: 12
+    },
+
+    selectorScroll: {
+        gap: 10,
+        paddingRight: 4
+    },
+
+    selectorChip: {
+        minWidth: 150,
+        backgroundColor: "#151A2E",
+        borderRadius: 14,
+        paddingVertical: 12,
+        paddingHorizontal: 14,
+        borderWidth: 1,
+        borderColor: "#26314E"
+    },
+
+    selectorChipActive: {
+        backgroundColor: "#8B5CF6",
+        borderColor: "#8B5CF6"
+    },
+
+    selectorChipBank: {
+        color: "#fff",
+        fontSize: 14,
+        fontWeight: "600"
+    },
+
+    selectorChipBankActive: {
+        color: "#fff"
+    },
+
+    selectorChipAccount: {
+        color: "#9CA3AF",
+        fontSize: 12,
+        marginTop: 4
+    },
+
+    selectorChipAccountActive: {
+        color: "#E9D5FF"
+    },
+
+    liveListCard: {
+        backgroundColor: "#151A2E",
+        borderRadius: 22,
+        padding: 18,
+        borderWidth: 1,
+        borderColor: "#1F2937"
+    },
+
+    selectedAccountHeader: {
+        marginBottom: 16
+    },
+
+    selectedAccountBank: {
+        color: "#fff",
+        fontSize: 18,
+        fontWeight: "700"
+    },
+
+    selectedAccountMeta: {
+        color: "#94A3B8",
+        fontSize: 13,
+        marginTop: 4
+    },
+
+    emptyLiveState: {
+        alignItems: "center",
+        justifyContent: "center",
+        paddingVertical: 44,
+        paddingHorizontal: 16
+    },
+
+    emptyLiveTitle: {
+        color: "#fff",
+        fontSize: 16,
+        fontWeight: "600",
+        textAlign: "center",
+        marginTop: 14
+    },
+
+    emptyLiveDesc: {
+        color: "#94A3B8",
+        textAlign: "center",
+        marginTop: 8,
+        lineHeight: 20
+    },
+
+    depositItem: {
+        flexDirection: "row",
+        gap: 12,
+        backgroundColor: "#0F172A",
+        borderRadius: 16,
+        padding: 14,
+        borderWidth: 1,
+        borderColor: "#1F2937",
+        marginBottom: 12
+    },
+
+    depositIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: "#151A2E",
+        justifyContent: "center",
+        alignItems: "center"
+    },
+
+    depositBody: {
+        flex: 1
+    },
+
+    depositTopRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 10
+    },
+
+    depositBankName: {
+        color: "#fff",
+        fontSize: 15,
+        fontWeight: "700",
+        flex: 1
+    },
+
+    depositAmount: {
+        fontSize: 15,
+        fontWeight: "700"
+    },
+
+    depositMetaRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginTop: 6
+    },
+
+    depositMeta: {
+        color: "#94A3B8",
+        fontSize: 12,
+        marginTop: 4
+    },
+
+    depositBottomRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginTop: 10,
+        gap: 10
+    },
+
+    depositTime: {
+        color: "#CBD5E1",
+        fontSize: 12,
+        flex: 1
+    },
+
+    depositType: {
+        fontSize: 11,
+        fontWeight: "700",
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 999,
+        overflow: "hidden"
+    },
+
 });
