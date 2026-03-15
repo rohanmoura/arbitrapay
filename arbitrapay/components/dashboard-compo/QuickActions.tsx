@@ -26,7 +26,7 @@ export default function QuickLinks() {
     {
       title: "Transactions",
       icon: "time-outline",
-      route: "/transactions"
+      route: "/payment-history"
     }
   ];
 

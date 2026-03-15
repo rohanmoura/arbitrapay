@@ -1,6 +1,8 @@
 import HeaderBar from "@/components/dashboard-compo/HeaderBar";
 import StatsGrid from "@/components/dashboard-compo/StatsGrid";
 import WalletHero from "@/components/dashboard-compo/WalletCard";
+import FullScreenLoader from "@/components/FullScreenLoader";
+import { useFinancialSummary } from "@/hooks/useFinancialSummary";
 import { styles } from "@/screens/dashboard/UserDashboard.styles";
 
 import { useRef, useState } from "react";
@@ -18,6 +20,7 @@ export default function UserDashboard() {
   const scrollY = useRef(new Animated.Value(0)).current;
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { loading, summary } = useFinancialSummary();
 
   const openMenu = () => {
     setSidebarOpen(true);
@@ -26,6 +29,10 @@ export default function UserDashboard() {
   const closeMenu = () => {
     setSidebarOpen(false);
   };
+
+  if (loading) {
+    return <FullScreenLoader />;
+  }
 
   return (
     <View style={styles.container}>
@@ -55,13 +62,21 @@ export default function UserDashboard() {
 
         <BannerSlider />
 
-        <WalletHero />
+        <WalletHero currentBalance={summary.currentBalance} />
 
         <QuickLinks />
 
-        <StatsGrid />
+        <StatsGrid
+          currentBalance={summary.currentBalance}
+          totalDeposits={summary.totalDeposits}
+          pendingWithdrawals={summary.pendingWithdrawals}
+        />
 
-        <BankStats />
+        <BankStats
+          totalBankAccounts={summary.totalBankAccounts}
+          verifiedBankAccounts={summary.verifiedBankAccounts}
+          pendingWithdrawals={summary.pendingWithdrawals}
+        />
 
         <OtherResources />
 

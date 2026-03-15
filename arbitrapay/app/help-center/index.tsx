@@ -1,8 +1,9 @@
+import { useHelpCenter } from "@/hooks/useHelpCenter";
 import { styles } from "@/screens/feature-compo/HelpCenter.style";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
 import {
+    ActivityIndicator,
     KeyboardAvoidingView,
     Modal,
     Platform,
@@ -17,19 +18,23 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HelpCenter() {
 
-    const [ticketVisible, setTicketVisible] = useState(false)
-    const [category, setCategory] = useState("Account Issue")
-    const [subject, setSubject] = useState("")
-    const [message, setMessage] = useState("")
     const router = useRouter();
-
-    const categories = [
-        "Deposit Issue",
-        "Withdrawal Issue",
-        "Account Issue",
-        "Technical Issue",
-        "Other"
-    ]
+    const {
+        categories,
+        ticketVisible,
+        category,
+        subject,
+        message,
+        submitting,
+        canSubmit,
+        setCategory,
+        setSubject,
+        setMessage,
+        openTelegram,
+        openTicketModal,
+        closeTicketModal,
+        submitTicket
+    } = useHelpCenter();
 
     return (
 
@@ -65,7 +70,11 @@ export default function HelpCenter() {
 
                 {/* Telegram Button */}
 
-                <TouchableOpacity style={styles.telegramBtn}>
+                <TouchableOpacity
+                    style={styles.telegramBtn}
+                    onPress={openTelegram}
+                    activeOpacity={0.85}
+                >
 
                     <Ionicons name="paper-plane-outline" size={18} color="#fff" />
 
@@ -74,29 +83,6 @@ export default function HelpCenter() {
                     </Text>
 
                 </TouchableOpacity>
-
-
-                {/* Quick Contact */}
-
-                <View style={styles.quickCard}>
-
-                    <Text style={styles.quickTitle}>
-                        Quick Contact
-                    </Text>
-
-                    <View style={styles.whatsappBox}>
-
-                        <Text style={styles.whatsappLabel}>
-                            WhatsApp
-                        </Text>
-
-                        <Text style={styles.whatsappAction}>
-                            Chat Now
-                        </Text>
-
-                    </View>
-
-                </View>
 
 
                 {/* Empty Ticket State */}
@@ -119,7 +105,7 @@ export default function HelpCenter() {
 
                     <TouchableOpacity
                         style={styles.createTicketBtn}
-                        onPress={() => setTicketVisible(true)}
+                        onPress={openTicketModal}
                     >
 
                         <Ionicons name="add" size={18} color="#fff" />
@@ -145,7 +131,7 @@ export default function HelpCenter() {
 
                 <View style={styles.modalOverlay}>
                     <TouchableWithoutFeedback
-                        onPress={() => setTicketVisible(false)}
+                        onPress={closeTicketModal}
                     >
                         <View style={styles.modalBackdrop} />
                     </TouchableWithoutFeedback>
@@ -167,7 +153,7 @@ export default function HelpCenter() {
                                     </Text>
 
                                     <TouchableOpacity
-                                        onPress={() => setTicketVisible(false)}
+                                        onPress={closeTicketModal}
                                     >
 
                                         <Ionicons name="close" size={22} color="#64748B" />
@@ -249,13 +235,16 @@ export default function HelpCenter() {
 
                                 <TouchableOpacity style={[
                                     styles.submitBtn,
-                                    (!subject || !message) && { opacity: 0.5 }
-                                ]} disabled={!subject || !message}>
-
-                                    <Ionicons name="paper-plane-outline" size={18} color="#fff" />
+                                    (!canSubmit || submitting) && { opacity: 0.5 }
+                                ]} disabled={!canSubmit} onPress={submitTicket}>
+                                    {submitting ? (
+                                        <ActivityIndicator size="small" color="#fff" />
+                                    ) : (
+                                        <Ionicons name="paper-plane-outline" size={18} color="#fff" />
+                                    )}
 
                                     <Text style={styles.submitText}>
-                                        Submit Ticket
+                                        {submitting ? "Submitting..." : "Submit Ticket"}
                                     </Text>
 
                                 </TouchableOpacity>

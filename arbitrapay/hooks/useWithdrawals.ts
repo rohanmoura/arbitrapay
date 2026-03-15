@@ -3,6 +3,7 @@ import { Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 
 import { useAuth } from "@/contexts/AuthContext";
+import { fetchPaymentHistoryData } from "@/services/paymentHistoryService";
 import {
   createWithdrawalRequest,
   fetchWithdrawalBankAccounts,
@@ -11,7 +12,6 @@ import {
 } from "@/services/withdrawalService";
 import { sortBankAccounts } from "@/services/bankAccountService";
 
-const AVAILABLE_BALANCE = 24850;
 const MINIMUM_WITHDRAWAL = 500;
 const MAXIMUM_WITHDRAWAL = 50000;
 
@@ -24,13 +24,14 @@ export function useWithdrawals() {
   const [amount, setAmount] = useState("");
   const [accounts, setAccounts] = useState<WithdrawalBankAccount[]>([]);
   const [selectedBankId, setSelectedBankId] = useState<string | null>(null);
+  const [availableBalance, setAvailableBalance] = useState(0);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const numericAmount = Number(amount || 0);
   const isValidAmount =
     numericAmount >= MINIMUM_WITHDRAWAL &&
     numericAmount <= MAXIMUM_WITHDRAWAL &&
-    numericAmount <= AVAILABLE_BALANCE;
+    numericAmount <= availableBalance;
 
   useEffect(() => {
     return () => {
@@ -61,8 +62,13 @@ export function useWithdrawals() {
     setLoading(true);
 
     try {
-      const bankAccounts = await fetchWithdrawalBankAccounts(session.user.id);
+      const [bankAccounts, paymentHistory] = await Promise.all([
+        fetchWithdrawalBankAccounts(session.user.id),
+        fetchPaymentHistoryData(session.user.id),
+      ]);
+
       setAccounts(bankAccounts);
+      setAvailableBalance(paymentHistory.summary.currentBalance);
 
       if (bankAccounts.length === 0) {
         setSelectedBankId(null);
@@ -80,6 +86,7 @@ export function useWithdrawals() {
       );
       setAccounts([]);
       setSelectedBankId(null);
+      setAvailableBalance(0);
     } finally {
       setLoading(false);
     }
@@ -161,6 +168,7 @@ export function useWithdrawals() {
       });
 
       setAmount("");
+      setAvailableBalance((current) => Math.max(0, current - numericAmount));
       showToast("Withdrawal request submitted");
     } catch (error: any) {
       Alert.alert(
@@ -183,7 +191,7 @@ export function useWithdrawals() {
     selectedBankId,
     selectedAccount:
       accounts.find((account) => account.id === selectedBankId) || null,
-    availableBalance: AVAILABLE_BALANCE,
+    availableBalance,
     minimumWithdrawal: MINIMUM_WITHDRAWAL,
     maximumWithdrawal: MAXIMUM_WITHDRAWAL,
     isValidAmount,

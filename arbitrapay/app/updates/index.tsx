@@ -1,44 +1,31 @@
 import { styles } from "@/screens/feature-compo/Updates.style";
+import FullScreenLoader from "@/components/FullScreenLoader";
+import { useUpdates } from "@/hooks/useUpdates";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+function formatUpdateDate(date: string | null) {
+    if (!date) {
+        return "Recently";
+    }
+
+    return new Intl.DateTimeFormat("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+    }).format(new Date(date));
+}
+
 export default function Updates() {
 
     const router = useRouter();
+    const { loading, updates } = useUpdates();
 
-    const updates = [
-
-        {
-            id: 1,
-            date: "Today",
-            content:
-                `(Saving Account)
-
-gaming fund 3.8% commission 
-
-mixed fund 4.8% commission 
-
-stock fund 5.8% commission 
-
-(Current Account)
-
-gaming fund 3.8% commission 
-
-mixed fund 4.8% commission 
-
-stock fund 5.8% commission 
-
-(Corporate Account)
-
-gaming fund 3.8% commission 
-
-mixed fund 4.8% commission 
-
-stock fund 5.8% commission`
-        },
-    ];
+    if (loading) {
+        return <FullScreenLoader />;
+    }
 
     return (
 
@@ -68,7 +55,7 @@ stock fund 5.8% commission`
                     Latest announcements from admin
                 </Text>
 
-                {updates.map((item) => (
+                {updates.map((item, index) => (
 
                     <View key={item.id} style={styles.updateCard}>
 
@@ -81,17 +68,17 @@ stock fund 5.8% commission`
                                 <View style={styles.adminBadge}>
                                     <Ionicons name="megaphone-outline" size={14} color="#8B5CF6" />
                                     <Text style={styles.adminText}>
-                                        Commision Update
+                                        {item.title}
                                     </Text>
                                 </View>
 
                                 <View style={styles.dateRow}>
 
                                     <Text style={styles.updateDate}>
-                                        {item.date}
+                                        {formatUpdateDate(item.created_at)}
                                     </Text>
 
-                                    {item.date === "Today" && (
+                                    {index === 0 && (
                                         <View style={styles.newBadge}>
                                             <Text style={styles.newText}>
                                                 NEW
@@ -104,7 +91,7 @@ stock fund 5.8% commission`
                             </View>
 
                             <Text style={styles.updateContent}>
-                                {item.content}
+                                {item.message}
                             </Text>
 
                         </View>
@@ -112,6 +99,26 @@ stock fund 5.8% commission`
                     </View>
 
                 ))}
+
+                {!updates.length && (
+                    <View style={styles.updateCard}>
+                        <View style={styles.updateAccent} />
+                        <View style={styles.updateContentWrap}>
+                            <View style={styles.updateHeader}>
+                                <View style={styles.adminBadge}>
+                                    <Ionicons name="megaphone-outline" size={14} color="#8B5CF6" />
+                                    <Text style={styles.adminText}>
+                                        No Updates
+                                    </Text>
+                                </View>
+                            </View>
+
+                            <Text style={styles.updateContent}>
+                                Admin updates will appear here as soon as they are published.
+                            </Text>
+                        </View>
+                    </View>
+                )}
 
             </ScrollView>
 

@@ -1,8 +1,28 @@
 import { styles } from "@/screens/dashboard/BankStats.styles";
 import { Ionicons } from "@expo/vector-icons";
+import { Href, useRouter } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
 
-export default function BankStats() {
+type Props = {
+  totalBankAccounts: number;
+  verifiedBankAccounts: number;
+  pendingWithdrawals: number;
+};
+
+function formatCurrency(value: number) {
+  return value.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+export default function BankStats({
+  totalBankAccounts,
+  verifiedBankAccounts,
+  pendingWithdrawals,
+}: Props) {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
 
@@ -15,15 +35,19 @@ export default function BankStats() {
             <Text style={styles.bigLabel}>Bank Accounts</Text>
           </View>
 
-          <Text style={styles.bigValue}>0</Text>
+          <Text style={styles.bigValue}>{totalBankAccounts}</Text>
         </View>
 
         {/* EMPTY STATE */}
         <Text style={styles.emptyText}>
-          No bank accounts added yet
+          {totalBankAccounts > 0 ? "Manage your linked payout accounts" : "No bank accounts added yet"}
         </Text>
 
-        <TouchableOpacity style={styles.addBtn} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.addBtn}
+          activeOpacity={0.85}
+          onPress={() => router.push("/bank-account" as Href)}
+        >
           <Ionicons name="add-circle-outline" size={18} color="#fff" />
           <Text style={styles.addText}>Add Bank Account</Text>
         </TouchableOpacity>
@@ -44,7 +68,7 @@ export default function BankStats() {
 
             <View>
               <Text style={styles.statLabel}>Verified Banks</Text>
-              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statValue}>{verifiedBankAccounts}</Text>
             </View>
           </View>
 
@@ -56,7 +80,7 @@ export default function BankStats() {
 
           <Text style={styles.statLabel}>Pending Withdrawals</Text>
 
-          <Text style={styles.statValue}>0.00</Text>
+          <Text style={styles.statValue}>{formatCurrency(pendingWithdrawals)}</Text>
 
           <View style={styles.progressTrack}>
             <View style={styles.progressBar} />

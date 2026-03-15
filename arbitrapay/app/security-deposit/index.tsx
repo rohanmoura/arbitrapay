@@ -1,4 +1,5 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
+import { useFinancialSummary } from "@/hooks/useFinancialSummary";
 import { TELEGRAM_CHANNEL_URL } from "@/components/FloatingTelegramButton";
 import { useSecurityDeposit } from "@/hooks/useSecurityDeposit";
 import { styles } from "@/screens/feature-compo/SecurityDeposit.styles";
@@ -19,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function SecurityDeposit() {
 
     const router = useRouter();
+    const { loading: summaryLoading, summary } = useFinancialSummary();
     const {
         loading,
         submitting,
@@ -57,7 +59,7 @@ export default function SecurityDeposit() {
         }
     };
 
-    if (loading) {
+    if (loading || summaryLoading) {
         return <FullScreenLoader />;
     }
 
@@ -94,7 +96,9 @@ export default function SecurityDeposit() {
 
                     <View style={styles.balanceBox}>
                         <Text style={styles.balanceLabel}>Current Balance</Text>
-                        <Text style={styles.balanceAmount}>₹0</Text>
+                        <Text style={styles.balanceAmount}>
+                            ₹{summary.currentBalance.toLocaleString("en-IN")}
+                        </Text>
                     </View>
 
                     <View style={styles.walletMeta}>

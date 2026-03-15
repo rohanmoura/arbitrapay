@@ -2,7 +2,24 @@ import { styles } from "@/screens/dashboard/StatsGrid.styles";
 import { Ionicons } from "@expo/vector-icons";
 import { Text, View } from "react-native";
 
-export default function StatsGrid() {
+type Props = {
+  currentBalance: number;
+  totalDeposits: number;
+  pendingWithdrawals: number;
+};
+
+function formatCurrency(value: number) {
+  return value.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+export default function StatsGrid({
+  currentBalance,
+  totalDeposits,
+  pendingWithdrawals,
+}: Props) {
   return (
     <View style={styles.container}>
 
@@ -10,7 +27,7 @@ export default function StatsGrid() {
         <View style={[styles.accent, { backgroundColor: "#3DDC97" }]} />
         <Ionicons name="wallet-outline" size={16} style={styles.icon} />
         <Text style={styles.label}>Wallet Total</Text>
-        <Text style={styles.value}>0.00</Text>
+        <Text style={styles.value}>{formatCurrency(currentBalance)}</Text>
       </View>
 
       <View style={styles.row}>
@@ -24,14 +41,14 @@ export default function StatsGrid() {
         <View style={[styles.accent, { backgroundColor: "#FF6B6B" }]} />
         <Ionicons name="lock-closed-outline" size={16} style={styles.icon} />
         <Text style={styles.label}>Locked Funds</Text>
-        <Text style={[styles.value, styles.valueLocked]}>0.00</Text>
+        <Text style={[styles.value, styles.valueLocked]}>{formatCurrency(totalDeposits)}</Text>
       </View>
 
       <View style={styles.row}>
         <View style={[styles.accent, { backgroundColor: "#B084F5" }]} />
         <Ionicons name="time-outline" size={16} style={styles.icon} />
         <Text style={styles.label}>Pending Withdraw</Text>
-        <Text style={[styles.value, styles.valuePending]}>0</Text>
+        <Text style={[styles.value, styles.valuePending]}>{formatCurrency(pendingWithdrawals)}</Text>
       </View>
 
     </View>

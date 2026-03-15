@@ -8,13 +8,17 @@ import { Href, useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, Image, Text, TouchableOpacity, View } from "react-native";
 
-export default function WalletCard() {
+type Props = {
+  currentBalance: number;
+};
+
+export default function WalletCard({ currentBalance }: Props) {
 
   const [name, setName] = useState("User");
   const router = useRouter();
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
   const translateAnim = useRef(new Animated.Value(40)).current;
-  const demoBalance = useCountUp(1248.75);
+  const animatedBalance = useCountUp(currentBalance);
 
   const startAnimation = useCallback(() => {
 
@@ -110,7 +114,7 @@ export default function WalletCard() {
           </View>
 
           {/* BALANCE */}
-          <Text style={styles.balance}>{demoBalance}</Text>
+          <Text style={styles.balance}>₹{animatedBalance}</Text>
 
           <View style={styles.divider} />
 
