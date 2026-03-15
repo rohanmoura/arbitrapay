@@ -1,9 +1,10 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
+import { useWithdrawals } from "@/hooks/useWithdrawals";
 import { styles } from "@/screens/feature-compo/Withdrawal.styles";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useState } from "react";
+import { Href, useRouter } from "expo-router";
 import {
+    ActivityIndicator,
     ScrollView,
     Text,
     TextInput,
@@ -12,79 +13,51 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type BankAccount = {
-    id: string;
-    bankName: string;
-    maskedNumber: string;
-    accountHolder: string;
-    ifsc: string;
-    isPrimary: boolean;
-};
-
 const quickAmounts = [1000, 2000, 5000, 10000, 20000, 50000];
 
-const mockBankAccount: BankAccount = {
-    id: "kotak-primary",
-    bankName: "Kotak Mahindra Bank",
-    maskedNumber: "****0378",
-    accountHolder: "Arpit Sharma",
-    ifsc: "KKBK0000876",
-    isPrimary: true
-};
+function maskAccountNumber(accountNumber: string) {
+    return `****${accountNumber.slice(-4)}`;
+}
 
 export default function Withdrawal() {
     const router = useRouter();
-    const [amount, setAmount] = useState("");
-    const [toast, setToast] = useState("");
-    const [loading, setLoading] = useState(false);
-
-    const availableBalance = 24850;
-    const minimumWithdrawal = 500;
-    const maximumWithdrawal = 50000;
-
-    // Switch this to null later to preview the empty bank-account state.
-    const bankAccount: BankAccount | null = mockBankAccount;
-
-    const [selectedBankId, setSelectedBankId] = useState<string | null>(
-        bankAccount?.id ?? null
-    );
-
-    const numericAmount = Number(amount || 0);
-    const hasBankAccount = Boolean(bankAccount);
-    const isValidAmount =
-        numericAmount >= minimumWithdrawal &&
-        numericAmount <= maximumWithdrawal &&
-        numericAmount <= availableBalance;
+    const {
+        loading,
+        submitting,
+        updatingPrimary,
+        toast,
+        amount,
+        setAmount,
+        accounts,
+        selectedBankId,
+        selectedAccount,
+        availableBalance,
+        minimumWithdrawal,
+        maximumWithdrawal,
+        isValidAmount,
+        selectBankAccount,
+        submitWithdrawal,
+    } = useWithdrawals();
 
     const canSubmit = Boolean(
         amount &&
-        hasBankAccount &&
+        accounts.length > 0 &&
         selectedBankId &&
-        isValidAmount
+        isValidAmount &&
+        !submitting &&
+        !updatingPrimary
     );
 
     const handleQuickAmount = (value: number) => {
         setAmount(String(value));
     };
 
-    const handleRequestWithdrawal = async () => {
-        if (!canSubmit) {
-            return;
-        }
-
-        try {
-            setLoading(true);
-            await new Promise((resolve) => setTimeout(resolve, 1200));
-            setToast("Withdrawal request submitted");
-        } finally {
-            setLoading(false);
-            setTimeout(() => setToast(""), 2000);
-        }
-    };
+    if (loading) {
+        return <FullScreenLoader />;
+    }
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            {loading && <FullScreenLoader />}
 
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
@@ -135,7 +108,8 @@ export default function Withdrawal() {
                         placeholderTextColor="#6B7280"
                         keyboardType="numeric"
                         value={amount}
-                        onChangeText={setAmount}
+                        editable={!submitting}
+                        onChangeText={(text) => setAmount(text.replace(/[^0-9]/g, ""))}
                     />
 
                     <View style={styles.quickRow}>
@@ -150,6 +124,7 @@ export default function Withdrawal() {
                                         active && styles.quickBtnActive
                                     ]}
                                     onPress={() => handleQuickAmount(value)}
+                                    disabled={submitting}
                                 >
                                     <Text
                                         style={[
@@ -171,44 +146,50 @@ export default function Withdrawal() {
 
                     <Text style={styles.inputLabel}>Select Bank Account</Text>
 
-                    {hasBankAccount && bankAccount ? (
-                        <TouchableOpacity
-                            style={[
-                                styles.bankCard,
-                                selectedBankId === bankAccount.id &&
+                    {accounts.length > 0 ? (
+                        accounts.map((bankAccount) => (
+                            <TouchableOpacity
+                                key={bankAccount.id}
+                                style={[
+                                    styles.bankCard,
+                                    selectedBankId === bankAccount.id &&
                                     styles.bankCardSelected
-                            ]}
-                            onPress={() => setSelectedBankId(bankAccount.id)}
-                        >
-                            <View style={styles.radioOuter}>
-                                {selectedBankId === bankAccount.id ? (
-                                    <View style={styles.radioInner} />
-                                ) : null}
-                            </View>
-
-                            <View style={styles.bankIconWrap}>
-                                <Ionicons
-                                    name="business-outline"
-                                    size={22}
-                                    color="#8EA2FF"
-                                />
-                            </View>
-
-                            <View style={styles.bankDetails}>
-                                <Text style={styles.bankName}>
-                                    {bankAccount.bankName}
-                                </Text>
-                                <Text style={styles.bankMeta}>
-                                    {bankAccount.maskedNumber} • {bankAccount.ifsc}
-                                </Text>
-                            </View>
-
-                            {bankAccount.isPrimary ? (
-                                <View style={styles.bankTag}>
-                                    <Text style={styles.bankTagText}>Primary</Text>
+                                ]}
+                                onPress={() => selectBankAccount(bankAccount.id)}
+                                disabled={submitting || Boolean(updatingPrimary)}
+                            >
+                                <View style={styles.radioOuter}>
+                                    {selectedBankId === bankAccount.id ? (
+                                        <View style={styles.radioInner} />
+                                    ) : null}
                                 </View>
-                            ) : null}
-                        </TouchableOpacity>
+
+                                <View style={styles.bankIconWrap}>
+                                    <Ionicons
+                                        name="business-outline"
+                                        size={22}
+                                        color="#8EA2FF"
+                                    />
+                                </View>
+
+                                <View style={styles.bankDetails}>
+                                    <Text style={styles.bankName}>
+                                        {bankAccount.bank_name}
+                                    </Text>
+                                    <Text style={styles.bankMeta}>
+                                        {maskAccountNumber(bankAccount.account_number)} • {bankAccount.ifsc_code}
+                                    </Text>
+                                </View>
+
+                                {updatingPrimary === bankAccount.id ? (
+                                    <ActivityIndicator size="small" color="#8EA2FF" />
+                                ) : bankAccount.is_default ? (
+                                    <View style={styles.bankTag}>
+                                        <Text style={styles.bankTagText}>Primary</Text>
+                                    </View>
+                                ) : null}
+                            </TouchableOpacity>
+                        ))
                     ) : (
                         <View style={styles.emptyBankBox}>
                             <Ionicons
@@ -226,7 +207,10 @@ export default function Withdrawal() {
                                 your ArbitraPay wallet.
                             </Text>
 
-                            <TouchableOpacity style={styles.addBankBtn}>
+                            <TouchableOpacity
+                                style={styles.addBankBtn}
+                                onPress={() => router.push("/bank-account" as Href)}
+                            >
                                 <Ionicons
                                     name="add-outline"
                                     size={18}
@@ -242,7 +226,7 @@ export default function Withdrawal() {
                     <View style={styles.helperRow}>
                         <Text style={styles.helperLabel}>Selected Holder</Text>
                         <Text style={styles.helperValue}>
-                            {bankAccount?.accountHolder ?? "Not available"}
+                            {selectedAccount?.account_holder_name ?? "Not available"}
                         </Text>
                     </View>
 
@@ -277,14 +261,20 @@ export default function Withdrawal() {
                             !canSubmit && styles.submitDisabled
                         ]}
                         disabled={!canSubmit}
-                        onPress={handleRequestWithdrawal}
+                        onPress={submitWithdrawal}
                     >
-                        <Text style={styles.submitText}>Request Withdrawal</Text>
-                        <Ionicons
-                            name="arrow-forward"
-                            size={18}
-                            color="#fff"
-                        />
+                        {submitting ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                            <>
+                                <Text style={styles.submitText}>Request Withdrawal</Text>
+                                <Ionicons
+                                    name="arrow-forward"
+                                    size={18}
+                                    color="#fff"
+                                />
+                            </>
+                        )}
                     </TouchableOpacity>
                 </View>
             </ScrollView>
