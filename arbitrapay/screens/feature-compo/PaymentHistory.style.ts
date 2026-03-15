@@ -162,4 +162,130 @@ export const styles = StyleSheet.create({
         marginBottom: 6
     },
 
+    metricsRow: {
+        flexDirection: "row",
+        gap: 12
+    },
+
+    metricCard: {
+        flex: 1,
+        backgroundColor: "#151A2E",
+        borderRadius: 16,
+        padding: 16,
+        shadowColor: "#000",
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 5
+    },
+
+    metricLabel: {
+        color: "#94A3B8",
+        fontSize: 12
+    },
+
+    metricValue: {
+        color: "#fff",
+        fontSize: 18,
+        fontWeight: "700",
+        marginTop: 8
+    },
+
+    listWrap: {
+        gap: 12
+    },
+
+    transactionCard: {
+        backgroundColor: "#151A2E",
+        borderRadius: 18,
+        padding: 16,
+        flexDirection: "row",
+        gap: 12,
+        shadowColor: "#000",
+        shadowOpacity: 0.22,
+        shadowRadius: 8,
+        elevation: 5
+    },
+
+    transactionIcon: {
+        width: 42,
+        height: 42,
+        borderRadius: 14,
+        backgroundColor: "#0F172A",
+        justifyContent: "center",
+        alignItems: "center"
+    },
+
+    transactionBody: {
+        flex: 1
+    },
+
+    transactionTop: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: 10
+    },
+
+    transactionTitle: {
+        color: "#fff",
+        fontSize: 15,
+        fontWeight: "700",
+        flex: 1
+    },
+
+    transactionAmount: {
+        fontSize: 15,
+        fontWeight: "700"
+    },
+
+    transactionMetaRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginTop: 6
+    },
+
+    transactionMeta: {
+        color: "#94A3B8",
+        fontSize: 12,
+        marginTop: 4
+    },
+
+    transactionBottom: {
+        marginTop: 10,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        gap: 12
+    },
+
+    transactionTime: {
+        color: "#CBD5E1",
+        fontSize: 12,
+        flex: 1
+    },
+
+    badgeRow: {
+        flexDirection: "row",
+        gap: 8
+    },
+
+    directionBadge: {
+        fontSize: 11,
+        fontWeight: "700",
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 999,
+        overflow: "hidden"
+    },
+
+    statusBadgeInline: {
+        fontSize: 11,
+        fontWeight: "700",
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 999,
+        overflow: "hidden"
+    },
+
 });

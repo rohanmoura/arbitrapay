@@ -1,4 +1,5 @@
 import { useProfile } from "@/hooks/useProfile";
+import { useTransactionNotifications } from "@/hooks/useTransactionNotifications";
 import { styles } from "@/screens/dashboard/HeaderBar.styles";
 import { AppColors } from "@/theme/colors";
 import { Ionicons } from "@expo/vector-icons";
@@ -15,6 +16,7 @@ export default function HeaderBar({ openMenu, isOpen }: Props) {
 
   const router = useRouter();
   const { profile } = useProfile();
+  const { hasUnreadTransactions } = useTransactionNotifications();
 
   const avatar = profile?.avatar;
 
@@ -32,12 +34,16 @@ export default function HeaderBar({ openMenu, isOpen }: Props) {
 
         <View style={styles.rightSection}>
 
-          <TouchableOpacity style={styles.notification}>
+          <TouchableOpacity
+            style={styles.notification}
+            onPress={() => router.push("/payment-history")}
+          >
             <Ionicons
               name="notifications-outline"
               size={22}
               color={AppColors.text.primary}
             />
+            {hasUnreadTransactions ? <View style={styles.notificationDot} /> : null}
           </TouchableOpacity>
 
           <TouchableOpacity
