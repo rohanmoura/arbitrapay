@@ -170,6 +170,20 @@ export const styles = StyleSheet.create({
         fontSize: 15
     },
 
+    stepBackBtn: {
+        marginTop: 18,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6
+    },
+
+    stepBackText: {
+        color: "#9CA3AF",
+        fontSize: 13,
+        fontWeight: "500"
+    },
+
     toast: {
         position: "absolute",
         bottom: 40,

@@ -1,8 +1,10 @@
+import { useAccountActivation } from "@/hooks/useAccountActivation";
 import { styles } from "@/screens/feature-compo/AccountActivation.style";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
+    ActivityIndicator,
     Keyboard,
     KeyboardAvoidingView,
     Platform,
@@ -17,35 +19,27 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function AccountActivation() {
 
     const router = useRouter();
-
-    const [step, setStep] = useState(1);
-
-    const [toast, setToast] = useState("");
-
-    const [form, setForm] = useState({
-        accountNumber: "",
-        ifsc: "",
-        atmNumber: "",
-        cvv: "",
-        atmPin: "",
-        expiry: "",
-        netId: "",
-        netPassword: "",
-        txnPassword: "",
-        mobile: "",
-        telegram: ""
-    });
-
-    const [errors, setErrors] = useState<any>({});
-
-    const [showNetPass, setShowNetPass] = useState(false);
-    const [showTxnPass, setShowTxnPass] = useState(false);
-
-    const [loading, setLoading] = useState(false);
-
     const accountRef = useRef<TextInput>(null);
     const netIdRef = useRef<TextInput>(null);
     const scrollRef = useRef<ScrollView>(null);
+    const {
+        step,
+        setStep,
+        toast,
+        form,
+        errors,
+        showNetPass,
+        setShowNetPass,
+        showTxnPass,
+        setShowTxnPass,
+        loading,
+        updateField,
+        formatCard,
+        formatExpiry,
+        goToStep,
+        submitActivation,
+        resetAfterSuccess,
+    } = useAccountActivation();
 
     const isStep1Complete =
         form.accountNumber.length >= 9 &&
@@ -53,113 +47,27 @@ export default function AccountActivation() {
         form.atmNumber.replace(/\s/g, "").length === 16 &&
         form.cvv.length === 3 &&
         form.atmPin.length === 4 &&
-        form.expiry.length === 5
+        form.expiry.length === 5;
 
     const isStep2Complete =
         form.netId &&
         form.netPassword &&
         form.txnPassword &&
         form.mobile.length === 10 &&
-        form.telegram
+        form.telegram;
 
-    const updateField = (field: string, value: string) => {
-        setForm(prev => ({ ...prev, [field]: value }))
-        setErrors((prev: any) => ({ ...prev, [field]: "" }))
-    }
+    const handleSubmit = async () => {
+        const success = await submitActivation();
 
-    const formatCard = (value: string) => {
-
-        const digits = value.replace(/\D/g, "").slice(0, 16)
-
-        const parts = digits.match(/.{1,4}/g)
-
-        return parts ? parts.join(" ") : digits
-
-    }
-
-    const formatExpiry = (value: string) => {
-
-        const digits = value.replace(/\D/g, "").slice(0, 4)
-
-        if (digits.length <= 2) return digits
-
-        return digits.slice(0, 2) + "/" + digits.slice(2)
-
-    }
-
-    const validateStep1 = () => {
-
-        const e: any = {}
-
-        if (form.accountNumber.length < 9)
-            e.accountNumber = "Enter valid account number"
-
-        if (form.ifsc.length !== 11)
-            e.ifsc = "Invalid IFSC"
-
-        if (form.atmNumber.replace(/\s/g, "").length !== 16)
-            e.atmNumber = "Card must be 16 digits"
-
-        if (form.cvv.length !== 3)
-            e.cvv = "CVV must be 3 digits"
-
-        if (form.atmPin.length !== 4)
-            e.atmPin = "PIN must be 4 digits"
-
-        if (form.expiry.length !== 5)
-            e.expiry = "Enter expiry"
-
-        setErrors(e)
-
-        return Object.keys(e).length === 0
-
-    }
-
-    const validateStep2 = () => {
-
-        const e: any = {}
-
-        if (!form.netId)
-            e.netId = "Net banking ID required"
-
-        if (!form.netPassword)
-            e.netPassword = "Net banking password required"
-
-        if (!form.txnPassword)
-            e.txnPassword = "Transaction password required"
-
-        if (form.mobile.length !== 10)
-            e.mobile = "Enter valid mobile number"
-
-        if (!form.telegram)
-            e.telegram = "Telegram username required"
-
-        setErrors(e)
-
-        return Object.keys(e).length === 0
-
-    }
-
-    const handleSubmit = () => {
-
-        if (!validateStep2()) return
-
-        setLoading(true)
+        if (!success) {
+            return;
+        }
 
         setTimeout(() => {
-
-            setLoading(false)
-
-            setToast("Activation request submitted successfully")
-
-            setTimeout(() => {
-                setToast("")
-                router.back()
-            }, 2000)
-
-        }, 1500)
-
-    }
+            resetAfterSuccess();
+            router.back();
+        }, 2200);
+    };
 
     useEffect(() => {
         if (step === 1) {
@@ -202,7 +110,15 @@ export default function AccountActivation() {
 
                         <TouchableOpacity
                             style={styles.backBtn}
-                            onPress={() => router.back()}
+                            onPress={() => {
+                                if (step === 2 && !loading) {
+                                    setStep(1);
+                                    return;
+                                }
+
+                                router.back();
+                            }}
+                            disabled={loading}
                         >
                             <Ionicons name="arrow-back" size={22} color="#fff" />
                         </TouchableOpacity>
@@ -221,11 +137,21 @@ export default function AccountActivation() {
 
                         <View style={styles.progressRow}>
 
-                            <View style={[styles.progressDot, step >= 1 && styles.progressActive]} />
+                            <TouchableOpacity
+                                onPress={() => goToStep(1)}
+                                disabled={loading || step === 1}
+                            >
+                                <View style={[styles.progressDot, step >= 1 && styles.progressActive]} />
+                            </TouchableOpacity>
 
                             <View style={styles.progressLine} />
 
-                            <View style={[styles.progressDot, step >= 2 && styles.progressActive]} />
+                            <TouchableOpacity
+                                onPress={() => goToStep(2)}
+                                disabled={loading || step === 2}
+                            >
+                                <View style={[styles.progressDot, step >= 2 && styles.progressActive]} />
+                            </TouchableOpacity>
 
                         </View>
 
@@ -286,6 +212,7 @@ export default function AccountActivation() {
                                         placeholder="Enter account number"
                                         placeholderTextColor="#6B7280"
                                         value={form.accountNumber}
+                                        editable={!loading}
                                         onChangeText={(t) => updateField("accountNumber", t.replace(/\D/g, ""))}
                                     />
 
@@ -305,7 +232,8 @@ export default function AccountActivation() {
                                         placeholder="Enter IFSC"
                                         value={form.ifsc}
                                         maxLength={11}
-                                        onChangeText={(t) => updateField("ifsc", t.toUpperCase())}
+                                        editable={!loading}
+                                        onChangeText={(t) => updateField("ifsc", t.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())}
                                     />
                                 </View>
 
@@ -322,6 +250,7 @@ export default function AccountActivation() {
                                         keyboardType="number-pad"
                                         placeholder="1234 5678 9012 3456"
                                         value={form.atmNumber}
+                                        editable={!loading}
                                         onChangeText={(t) => updateField("atmNumber", formatCard(t))}
                                     />
                                 </View>
@@ -340,6 +269,7 @@ export default function AccountActivation() {
                                         secureTextEntry
                                         maxLength={3}
                                         value={form.cvv}
+                                        editable={!loading}
                                         onChangeText={(t) => updateField("cvv", t.replace(/\D/g, ""))}
                                     />
                                 </View>
@@ -358,6 +288,7 @@ export default function AccountActivation() {
                                         secureTextEntry
                                         maxLength={4}
                                         value={form.atmPin}
+                                        editable={!loading}
                                         onChangeText={(t) => updateField("atmPin", t.replace(/\D/g, ""))}
                                     />
                                 </View>
@@ -375,6 +306,7 @@ export default function AccountActivation() {
                                         keyboardType="number-pad"
                                         placeholder="MM/YY"
                                         value={form.expiry}
+                                        editable={!loading}
                                         onChangeText={(t) => updateField("expiry", formatExpiry(t))}
                                     />
                                 </View>
@@ -384,13 +316,11 @@ export default function AccountActivation() {
                                 <TouchableOpacity
                                     style={[
                                         styles.submitBtn,
-                                        !isStep1Complete && styles.disabledBtn
+                                        (!isStep1Complete || loading) && styles.disabledBtn
                                     ]}
-                                    disabled={!isStep1Complete}
+                                    disabled={!isStep1Complete || loading}
                                     onPress={() => {
-                                        if (validateStep1()) {
-                                            setStep(2)
-                                        }
+                                        goToStep(2);
                                     }}
                                 >
 
@@ -419,6 +349,7 @@ export default function AccountActivation() {
                                         style={styles.inputField}
                                         placeholderTextColor="#6B7280"
                                         value={form.netId}
+                                        editable={!loading}
                                         onChangeText={(t) => updateField("netId", t)}
                                     />
                                 </View>
@@ -436,11 +367,13 @@ export default function AccountActivation() {
                                         placeholderTextColor="#6B7280"
                                         secureTextEntry={!showNetPass}
                                         value={form.netPassword}
+                                        editable={!loading}
                                         onChangeText={(t) => updateField("netPassword", t)}
                                     />
 
                                     <TouchableOpacity
                                         onPress={() => setShowNetPass(!showNetPass)}
+                                        disabled={loading}
                                     >
 
                                         <Ionicons
@@ -465,11 +398,13 @@ export default function AccountActivation() {
                                         placeholderTextColor="#6B7280"
                                         secureTextEntry={!showTxnPass}
                                         value={form.txnPassword}
+                                        editable={!loading}
                                         onChangeText={(t) => updateField("txnPassword", t)}
                                     />
 
                                     <TouchableOpacity
                                         onPress={() => setShowTxnPass(!showTxnPass)}
+                                        disabled={loading}
                                     >
 
                                         <Ionicons
@@ -495,6 +430,7 @@ export default function AccountActivation() {
                                         keyboardType="number-pad"
                                         maxLength={10}
                                         value={form.mobile}
+                                        editable={!loading}
                                         onChangeText={(t) => updateField("mobile", t.replace(/\D/g, ""))}
                                     />
                                 </View>
@@ -511,6 +447,7 @@ export default function AccountActivation() {
                                         placeholderTextColor="#6B7280"
                                         placeholder="@username"
                                         value={form.telegram}
+                                        editable={!loading}
                                         onChangeText={(t) => updateField("telegram", t)}
                                     />
                                 </View>
@@ -520,18 +457,31 @@ export default function AccountActivation() {
                                 <TouchableOpacity
                                     style={[
                                         styles.submitBtn,
-                                        !isStep2Complete && styles.disabledBtn
+                                        (!isStep2Complete || loading) && styles.disabledBtn
                                     ]}
-                                    disabled={!isStep2Complete}
+                                    disabled={!isStep2Complete || loading}
                                     onPress={handleSubmit}
                                 >
 
-                                    <Ionicons name="shield-checkmark-outline" size={18} color="#fff" />
+                                    {loading ? (
+                                        <ActivityIndicator size="small" color="#fff" />
+                                    ) : (
+                                        <Ionicons name="shield-checkmark-outline" size={18} color="#fff" />
+                                    )}
 
                                     <Text style={styles.submitText}>
                                         {loading ? "Submitting..." : "Submit for Approval"}
                                     </Text>
 
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={styles.stepBackBtn}
+                                    onPress={() => goToStep(1)}
+                                    disabled={loading}
+                                >
+                                    <Ionicons name="arrow-back-outline" size={16} color="#9CA3AF" />
+                                    <Text style={styles.stepBackText}>Back to Step 1</Text>
                                 </TouchableOpacity>
 
                             </>
@@ -550,6 +500,6 @@ export default function AccountActivation() {
             </KeyboardAvoidingView>
         </SafeAreaView >
 
-    )
+    );
 
 }
