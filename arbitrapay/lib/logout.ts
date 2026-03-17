@@ -4,9 +4,7 @@ import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 export async function handleLogout() {
     try {
-        const currentUser = await GoogleSignin.getCurrentUser();
-
-        if (currentUser) {
+        if (GoogleSignin.hasPreviousSignIn()) {
             await GoogleSignin.signOut();
         }
 

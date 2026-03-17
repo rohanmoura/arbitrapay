@@ -10,6 +10,13 @@ export type ProfileRecord = {
   phone: string | null;
 };
 
+export type ProfileAccessRecord = {
+  id: string;
+  email: string | null;
+  role: "user" | "admin" | null;
+  status: string | null;
+};
+
 export type UpdateProfileInput = {
   avatar?: string | null;
   name?: string | null;
@@ -57,6 +64,44 @@ export async function updateProfile(userId: string, updates: UpdateProfileInput)
     .eq("id", userId)
     .select("avatar, email, name, phone")
     .single<ProfileRecord>();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export function isProfileSuspended(status?: string | null) {
+  return status?.trim().toLowerCase() === "suspended";
+}
+
+export async function fetchProfileAccessByEmail(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (!normalizedEmail) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, email, role, status")
+    .ilike("email", normalizedEmail)
+    .maybeSingle<ProfileAccessRecord>();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function fetchProfileAccessById(userId: string) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, email, role, status")
+    .eq("id", userId)
+    .maybeSingle<ProfileAccessRecord>();
 
   if (error) {
     throw error;

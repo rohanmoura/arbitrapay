@@ -1,4 +1,9 @@
 import { supabase } from "@/lib/supabase";
+import {
+  fetchProfileAccessByEmail,
+  fetchProfileAccessById,
+  isProfileSuspended,
+} from "@/services/profileService";
 import { styles } from "@/screens/auth/Login.styles";
 import { AppColors } from "@/theme/colors";
 import { AntDesign } from "@expo/vector-icons";
@@ -36,6 +41,21 @@ export default function LoginScreen() {
       return;
     }
 
+    try {
+      const existingProfile = await fetchProfileAccessByEmail(trimmedEmail);
+
+      if (isProfileSuspended(existingProfile?.status)) {
+        Alert.alert(
+          "Account Suspended",
+          "This account has been suspended by the admin and cannot log in."
+        );
+        return;
+      }
+    } catch (error: any) {
+      Alert.alert("Error", error.message ?? "Unable to validate this account.");
+      return;
+    }
+
     setLoading(true);
 
     const { error } = await supabase.auth.signInWithOtp({
@@ -62,6 +82,10 @@ export default function LoginScreen() {
 
       await GoogleSignin.hasPlayServices();
 
+      if (GoogleSignin.hasPreviousSignIn()) {
+        await GoogleSignin.signOut();
+      }
+
       const userInfo = await GoogleSignin.signIn();
       const idToken = userInfo.data?.idToken;
 
@@ -78,6 +102,23 @@ export default function LoginScreen() {
       if (error) {
         Alert.alert("Login failed", error.message);
         return;
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const profile = await fetchProfileAccessById(user.id);
+
+        if (isProfileSuspended(profile?.status)) {
+          await supabase.auth.signOut();
+          Alert.alert(
+            "Account Suspended",
+            "This account has been suspended by the admin and cannot log in."
+          );
+          return;
+        }
       }
 
       router.replace("/(tabs)");

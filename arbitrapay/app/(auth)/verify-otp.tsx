@@ -14,6 +14,11 @@ import {
 import { router, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { supabase } from "@/lib/supabase";
+import {
+  fetchProfileAccessByEmail,
+  fetchProfileAccessById,
+  isProfileSuspended,
+} from "@/services/profileService";
 import { AppColors } from "@/theme/colors";
 import { styles } from "@/screens/auth/VerifyOtp.styles";
 
@@ -94,12 +99,47 @@ export default function VerifyOtpScreen() {
       return;
     }
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const profile = await fetchProfileAccessById(user.id);
+
+      if (isProfileSuspended(profile?.status)) {
+        await supabase.auth.signOut();
+        Alert.alert(
+          "Account Suspended",
+          "This account has been suspended by the admin and cannot log in."
+        );
+        return;
+      }
+    }
+
     router.replace("/(tabs)");
   }
 
   async function handleResend() {
     if (!email) {
       Alert.alert("Error", "Email missing. Please go back and try again.");
+      return;
+    }
+
+    try {
+      const existingProfile = await fetchProfileAccessByEmail(email);
+
+      if (isProfileSuspended(existingProfile?.status)) {
+        Alert.alert(
+          "Account Suspended",
+          "This account has been suspended by the admin and cannot log in."
+        );
+        return;
+      }
+    } catch (fetchError: any) {
+      Alert.alert(
+        "Error",
+        fetchError.message ?? "Unable to validate this account."
+      );
       return;
     }
 

@@ -3,6 +3,7 @@ import AdminSidebar, {
   type AdminSidebarItem,
 } from "@/components/admin-dashboard/AdminSidebar";
 import SecurityDepositSetupCard from "@/components/admin-dashboard/SecurityDepositSetupCard";
+import UsersScreen from "@/components/admin-dashboard/UsersScreen";
 import { useAuth } from "@/contexts/AuthContext";
 import { styles } from "@/screens/dashboard/AdminDashboard.styles";
 import { Ionicons } from "@expo/vector-icons";
@@ -31,6 +32,34 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
 
+  const renderMainContent = () => {
+    if (activeSection === "users") {
+      return <UsersScreen />;
+    }
+
+    return (
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
+        <View style={styles.balanceCard}>
+          <View style={styles.balanceHeader}>
+            <Text style={styles.balanceLabel}>ArbitraPay Balance</Text>
+            <Ionicons name="wallet-outline" size={20} color="#A78BFA" />
+          </View>
+
+          <Text style={styles.balanceAmount}>₹7,38,93,821</Text>
+
+          <Text style={styles.balanceNote}>
+            This is the total liquidity available for payouts and deposits.
+          </Text>
+        </View>
+
+        <SecurityDepositSetupCard />
+      </ScrollView>
+    );
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -57,26 +86,7 @@ export default function AdminDashboard() {
           </View>
         </View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.content}
-        >
-          <View style={styles.balanceCard}>
-            <View style={styles.balanceHeader}>
-              <Text style={styles.balanceLabel}>ArbitraPay Balance</Text>
-              <Ionicons name="wallet-outline" size={20} color="#A78BFA" />
-            </View>
-
-            <Text style={styles.balanceAmount}>₹7,38,93,821</Text>
-
-            <Text style={styles.balanceNote}>
-              This is the total liquidity available for payouts and deposits.
-            </Text>
-          </View>
-
-          <SecurityDepositSetupCard />
-
-        </ScrollView>
+        {renderMainContent()}
 
         <AdminSidebar
           visible={sidebarOpen}

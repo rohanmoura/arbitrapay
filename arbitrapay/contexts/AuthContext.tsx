@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { Alert } from "react-native";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
@@ -6,6 +7,7 @@ type Profile = {
   id: string;
   email: string;
   role: "user" | "admin";
+  status?: string | null;
 };
 
 type AuthContextType = {
@@ -24,6 +26,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const suspendedAlertUserIdRef = useRef<string | null>(null);
+
+  async function handleSuspendedSession(userId: string) {
+    if (suspendedAlertUserIdRef.current !== userId) {
+      suspendedAlertUserIdRef.current = userId;
+      Alert.alert(
+        "Account Suspended",
+        "Your account has been suspended by the admin. You have been logged out and cannot sign in again."
+      );
+    }
+
+    setProfile(null);
+    setSession(null);
+    await supabase.auth.signOut();
+  }
 
   async function fetchOrCreateProfile(userId: string, email?: string | null) {
     const { data, error } = await supabase
@@ -38,6 +55,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (data) {
+      if (data.status?.trim().toLowerCase() === "suspended") {
+        await handleSuspendedSession(userId);
+        return;
+      }
+
+      suspendedAlertUserIdRef.current = null;
       setProfile(data);
       return;
     }
@@ -52,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .single();
 
     if (!insertError && newProfile) {
+      suspendedAlertUserIdRef.current = null;
       setProfile(newProfile);
     }
   }
@@ -99,6 +123,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!session?.user?.id) {
+      return;
+    }
+
+    const channel = supabase
+      .channel(`profile-status-${session.user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${session.user.id}`,
+        },
+        async (payload) => {
+          const nextStatus = (payload.new as { status?: string | null }).status;
+
+          if (nextStatus?.trim().toLowerCase() === "suspended") {
+            await handleSuspendedSession(session.user.id);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.user?.id]);
 
   return (
     <AuthContext.Provider value={{ session, profile, loading }}>
