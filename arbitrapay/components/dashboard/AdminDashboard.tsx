@@ -15,10 +15,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import BankAccountsScreen from "../admin-dashboard/BankAccountScreen";
 
 const ADMIN_SECTIONS: AdminSidebarItem[] = [
   { key: "dashboard", label: "Dashboard", icon: "grid-outline" },
   { key: "users", label: "Users", icon: "people-outline" },
+  { key: "bank_accounts", label: "Bank Accounts", icon: "card-outline" },
   { key: "deposits", label: "Deposits", icon: "wallet-outline" },
   { key: "withdrawals", label: "Withdrawals", icon: "arrow-down-circle-outline" },
   { key: "live_deposits", label: "Live Deposits", icon: "pulse-outline" },
@@ -35,6 +37,9 @@ export default function AdminDashboard() {
   const renderMainContent = () => {
     if (activeSection === "users") {
       return <UsersScreen />;
+    }
+       if (activeSection === "bank_accounts") {
+      return <BankAccountsScreen />;
     }
 
     return (

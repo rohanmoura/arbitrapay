@@ -14,6 +14,7 @@ import {
 export type AdminSection =
   | "dashboard"
   | "users"
+  | "bank_accounts"
   | "deposits"
   | "withdrawals"
   | "live_deposits"
