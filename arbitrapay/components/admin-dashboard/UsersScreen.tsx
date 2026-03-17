@@ -15,13 +15,13 @@ import {
   Alert,
   FlatList,
   Image,
-  Modal,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import { styles } from "@/screens/admin-dashboard/UsersScreen.styles";
+import { router, type Href } from "expo-router";
 
 const PAGE_SIZE = 20;
 
@@ -56,8 +56,6 @@ export default function UsersScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [searching, setSearching] = useState(false);
   const [actionUserId, setActionUserId] = useState<string | null>(null);
-  const [viewModalVisible, setViewModalVisible] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<DisplayUser | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const loadSummary = useCallback(async () => {
@@ -178,9 +176,8 @@ export default function UsersScreen() {
     }
   };
 
-  const handleViewUser = (user: DisplayUser) => {
-    setSelectedUser(user);
-    setViewModalVisible(true);
+  const handleViewUser = (userId: string) => {
+    router.push(`/user-detail?id=${userId}` as Href);
   };
 
   const handleSearch = async (nextSearchEmail: string) => {
@@ -288,7 +285,7 @@ export default function UsersScreen() {
           </Text>
 
           <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.viewBtn} onPress={() => handleViewUser(item)}>
+            <TouchableOpacity style={styles.viewBtn} onPress={() => handleViewUser(item.id)}>
               <Text style={styles.viewText}>View</Text>
             </TouchableOpacity>
 
@@ -433,26 +430,6 @@ export default function UsersScreen() {
           </View>
         }
       />
-
-      <Modal
-        visible={viewModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setViewModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>User Details</Text>
-            <Text style={styles.modalText}>
-              Profile details for {selectedUser?.email || "this user"} will be added here in
-              the next step.
-            </Text>
-            <TouchableOpacity style={styles.viewBtn} onPress={() => setViewModalVisible(false)}>
-              <Text style={styles.viewText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }

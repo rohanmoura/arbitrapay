@@ -11,6 +11,18 @@ export type AdminUserProfileRecord = {
   status: string | null;
 };
 
+export type AdminUserDetailProfileRecord = AdminUserProfileRecord & {
+  created_at: string | null;
+  referral_code: string | null;
+};
+
+export type AdminUserDetailRecord = {
+  profile: AdminUserDetailProfileRecord;
+  bankAccountCount: number;
+  approvedSecurityDepositTotal: number;
+  approvedActivationCount: number;
+};
+
 export type AdminUsersSummary = {
   totalUsers: number;
   activeUsers: number;
@@ -102,6 +114,64 @@ export async function fetchAdminUsers(limit: number, sort: AdminUserSort) {
   }
 
   return (data || []) as AdminUserProfileRecord[];
+}
+
+export async function fetchAdminUserDetail(userId: string): Promise<AdminUserDetailRecord | null> {
+  const [profileResponse, bankAccountCountResponse, approvedDepositsResponse, approvedActivationsResponse] =
+    await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, avatar, email, name, phone, status, created_at, referral_code")
+        .eq("id", userId)
+        .eq("role", USER_ROLE)
+        .maybeSingle(),
+      supabase
+        .from("bank_accounts")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId),
+      supabase
+        .from("security_deposits")
+        .select("amount")
+        .eq("user_id", userId)
+        .eq("status", "approved"),
+      supabase
+        .from("account_activations")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("status", "approved"),
+    ]);
+
+  if (profileResponse.error) {
+    throw profileResponse.error;
+  }
+
+  if (bankAccountCountResponse.error) {
+    throw bankAccountCountResponse.error;
+  }
+
+  if (approvedDepositsResponse.error) {
+    throw approvedDepositsResponse.error;
+  }
+
+  if (approvedActivationsResponse.error) {
+    throw approvedActivationsResponse.error;
+  }
+
+  if (!profileResponse.data) {
+    return null;
+  }
+
+  const approvedSecurityDepositTotal = (approvedDepositsResponse.data || []).reduce(
+    (sum, deposit) => sum + Number(deposit.amount || 0),
+    0
+  );
+
+  return {
+    profile: profileResponse.data as AdminUserDetailProfileRecord,
+    bankAccountCount: bankAccountCountResponse.count ?? 0,
+    approvedSecurityDepositTotal,
+    approvedActivationCount: approvedActivationsResponse.count ?? 0,
+  };
 }
 
 export async function fetchActivatedUserIds(userIds: string[]) {

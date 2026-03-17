@@ -265,37 +265,6 @@ export const styles = StyleSheet.create({
     emptyStateText: {
         color: "#94A3B8",
         fontSize: 14
-    },
-
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: "rgba(2, 6, 23, 0.72)",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 24
-    },
-
-    modalCard: {
-        width: "100%",
-        maxWidth: 360,
-        backgroundColor: "#0F172A",
-        borderRadius: 18,
-        padding: 20,
-        borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.06)",
-        gap: 12
-    },
-
-    modalTitle: {
-        color: "#F8FAFC",
-        fontSize: 18,
-        fontWeight: "700"
-    },
-
-    modalText: {
-        color: "#CBD5E1",
-        fontSize: 14,
-        lineHeight: 22
     }
 
 });
