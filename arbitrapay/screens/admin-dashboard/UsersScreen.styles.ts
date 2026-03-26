@@ -112,8 +112,7 @@ export const styles = StyleSheet.create({
     },
 
     list: {
-        gap: 14,
-        paddingBottom: 120
+        gap: 14
     },
 
     userCard: {

@@ -7,7 +7,7 @@ import { isUserSuspended } from "@/services/adminUsersService";
 import { styles } from "@/screens/admin-dashboard/BankAccounts.styles";
 import { Ionicons } from "@expo/vector-icons";
 import { router, type Href } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -18,6 +18,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PAGE_SIZE = 20;
 
@@ -62,7 +63,15 @@ function maskAccountNumber(accountNumber: string) {
   return `**** **** **** ${accountNumber.slice(-4)}`;
 }
 
-function BankAccountCard({ item }: { item: AdminBankAccountRecord }) {
+type BankAccountCardProps = {
+  item: AdminBankAccountRecord;
+  onView: (userId: string) => void;
+};
+
+const BankAccountCard = memo(function BankAccountCard({
+  item,
+  onView,
+}: BankAccountCardProps) {
   const [showFull, setShowFull] = useState(false);
   const suspended = isUserSuspended(item.user.status);
   const displayName =
@@ -135,14 +144,22 @@ function BankAccountCard({ item }: { item: AdminBankAccountRecord }) {
 
         <TouchableOpacity
           style={styles.viewBtn}
-          onPress={() => router.push(`/user-bank-account?id=${item.id}` as Href)}
+          onPress={() => onView(item.userId)}
         >
           <Text style={styles.viewText}>View</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
-}
+});
+
+const EmptyState = memo(function EmptyState() {
+  return (
+    <View style={styles.emptyState}>
+      <Text style={styles.emptyStateText}>No bank accounts found.</Text>
+    </View>
+  );
+});
 
 export default function BankAccountsScreen() {
   const [sortOpen, setSortOpen] = useState(false);
@@ -155,8 +172,16 @@ export default function BankAccountsScreen() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [searching, setSearching] = useState(false);
+  const hasFetchedRef = useRef(false);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
+    if (hasFetchedRef.current) {
+      return;
+    }
+
+    hasFetchedRef.current = true;
+
     let active = true;
 
     const run = async () => {
@@ -230,20 +255,56 @@ export default function BankAccountsScreen() {
 
   const hasMore = sortedAccounts.length > visibleCount;
 
-  const handleSearch = async (value: string) => {
+  const handleSearch = useCallback(async (value: string) => {
     const normalizedEmail = value.trim().toLowerCase();
 
     setSearching(true);
     setVisibleCount(PAGE_SIZE);
     setSearchEmail(normalizedEmail);
     setSearching(false);
-  };
+  }, []);
 
-  const handleLoadMore = async () => {
+  const handleLoadMore = useCallback(async () => {
     setLoadingMore(true);
     setVisibleCount((current) => current + PAGE_SIZE);
     setLoadingMore(false);
-  };
+  }, []);
+
+  const handleViewAccount = useCallback((userId: string) => {
+    router.push(`/user-bank-account?userId=${userId}` as Href);
+  }, []);
+
+  const renderBankAccount = useCallback(
+    ({ item }: { item: AdminBankAccountRecord }) => (
+      <BankAccountCard item={item} onView={handleViewAccount} />
+    ),
+    [handleViewAccount]
+  );
+
+  const keyExtractor = useCallback((item: AdminBankAccountRecord) => item.id, []);
+
+  const footerComponent = useMemo(() => {
+    if (!hasMore) {
+      return null;
+    }
+
+    return (
+      <TouchableOpacity
+        style={styles.loadMoreBtn}
+        onPress={handleLoadMore}
+        disabled={loadingMore}
+      >
+        {loadingMore ? (
+          <ActivityIndicator size="small" color="#F8FAFC" />
+        ) : (
+          <>
+            <Text style={styles.loadMoreText}>Load More</Text>
+            <Ionicons name="chevron-down" size={16} color="#F8FAFC" />
+          </>
+        )}
+      </TouchableOpacity>
+    );
+  }, [handleLoadMore, hasMore, loadingMore]);
 
   if (loading) {
     return <FullScreenLoader />;
@@ -331,32 +392,17 @@ export default function BankAccountsScreen() {
 
       <FlatList
         data={visibleAccounts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <BankAccountCard item={item} />}
-        contentContainerStyle={styles.list}
-        ListFooterComponent={
-          hasMore ? (
-            <TouchableOpacity
-              style={styles.loadMoreBtn}
-              onPress={handleLoadMore}
-              disabled={loadingMore}
-            >
-              {loadingMore ? (
-                <ActivityIndicator size="small" color="#F8FAFC" />
-              ) : (
-                <>
-                  <Text style={styles.loadMoreText}>Load More</Text>
-                  <Ionicons name="chevron-down" size={16} color="#F8FAFC" />
-                </>
-              )}
-            </TouchableOpacity>
-          ) : null
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No bank accounts found.</Text>
-          </View>
-        }
+        keyExtractor={keyExtractor}
+        renderItem={renderBankAccount}
+        contentContainerStyle={[
+          styles.list,
+          { paddingBottom: insets.bottom + 100 },
+        ]}
+        ListFooterComponent={footerComponent}
+        ListEmptyComponent={EmptyState}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={5}
       />
     </View>
   );

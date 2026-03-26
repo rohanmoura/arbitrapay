@@ -110,7 +110,6 @@ export const styles = StyleSheet.create({
     // 🔥 LIST
     list: {
         gap: 14,
-        paddingBottom: 120,
     },
 
     // 🔥 CARD (MAIN PREMIUM UPGRADE)

@@ -9,12 +9,12 @@ import { styles } from "@/screens/dashboard/AdminDashboard.styles";
 import { Ionicons } from "@expo/vector-icons";
 import { useState } from "react";
 import {
-  SafeAreaView,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import BankAccountsScreen from "../admin-dashboard/BankAccountScreen";
 
 const ADMIN_SECTIONS: AdminSidebarItem[] = [
