@@ -257,12 +257,22 @@ export default function BankAccountsScreen() {
 
   const handleSearch = useCallback(async (value: string) => {
     const normalizedEmail = value.trim().toLowerCase();
+    const hasMatch = normalizedEmail
+      ? allAccounts.some(
+          (account) => account.user.email?.trim().toLowerCase() === normalizedEmail
+        )
+      : true;
 
     setSearching(true);
     setVisibleCount(PAGE_SIZE);
     setSearchEmail(normalizedEmail);
+
+    if (normalizedEmail && !hasMatch) {
+      Alert.alert("Search", "User not found");
+    }
+
     setSearching(false);
-  }, []);
+  }, [allAccounts]);
 
   const handleLoadMore = useCallback(async () => {
     setLoadingMore(true);

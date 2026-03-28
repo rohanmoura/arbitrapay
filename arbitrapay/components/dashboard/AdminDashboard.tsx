@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import BankAccountsScreen from "../admin-dashboard/BankAccountScreen";
+import SecurityDeposistsRequests from "../admin-dashboard/SecurityDepositsRequests";
 
 const ADMIN_SECTIONS: AdminSidebarItem[] = [
   { key: "dashboard", label: "Dashboard", icon: "grid-outline" },
@@ -38,9 +39,13 @@ export default function AdminDashboard() {
     if (activeSection === "users") {
       return <UsersScreen />;
     }
-       if (activeSection === "bank_accounts") {
+    if (activeSection === "bank_accounts") {
       return <BankAccountsScreen />;
     }
+    if (activeSection === "deposits") {
+      return <SecurityDeposistsRequests />;
+    }
+
 
     return (
       <ScrollView

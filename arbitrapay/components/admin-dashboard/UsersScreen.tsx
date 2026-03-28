@@ -174,6 +174,10 @@ export default function UsersScreen() {
           activated: activatedUserIds.has(user.id),
         }))
       );
+
+      return {
+        searchedUserFound: Boolean(searchedUser),
+      };
     },
     []
   );
@@ -273,7 +277,11 @@ export default function UsersScreen() {
       setSearching(true);
       setVisibleCount(PAGE_SIZE);
       setSearchEmail(normalizedEmail);
-      await loadUsers(PAGE_SIZE, sort, normalizedEmail);
+      const result = await loadUsers(PAGE_SIZE, sort, normalizedEmail);
+
+      if (normalizedEmail && !result.searchedUserFound) {
+        Alert.alert("Search", "User not found");
+      }
     } catch (error: any) {
       Alert.alert(
         "Search Error",
