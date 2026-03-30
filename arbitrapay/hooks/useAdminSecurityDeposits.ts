@@ -6,7 +6,8 @@ import {
   isNewSecurityDepositRequest,
   updateAdminSecurityDepositStatus,
 } from "@/services/adminSecurityDepositsService";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback, useMemo, useState } from "react";
 import { Alert } from "react-native";
 
 const PAGE_SIZE = 20;
@@ -99,39 +100,41 @@ export function useAdminSecurityDeposits() {
     setDeposits(data);
   }, []);
 
-  useEffect(() => {
-    let active = true;
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
 
-    const run = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchAdminSecurityDeposits();
+      const run = async () => {
+        try {
+          setLoading(true);
+          const data = await fetchAdminSecurityDeposits();
 
-        if (!active) {
-          return;
+          if (!active) {
+            return;
+          }
+
+          setDeposits(data);
+        } catch (error: any) {
+          if (active) {
+            Alert.alert(
+              "Security Deposits Error",
+              error.message || "Unable to load security deposit requests right now."
+            );
+          }
+        } finally {
+          if (active) {
+            setLoading(false);
+          }
         }
+      };
 
-        setDeposits(data);
-      } catch (error: any) {
-        if (active) {
-          Alert.alert(
-            "Security Deposits Error",
-            error.message || "Unable to load security deposit requests right now."
-          );
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
-    };
+      void run();
 
-    run();
-
-    return () => {
-      active = false;
-    };
-  }, []);
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
 
   const summary = useMemo(() => {
     return deposits.reduce<SecurityDepositSummary>(

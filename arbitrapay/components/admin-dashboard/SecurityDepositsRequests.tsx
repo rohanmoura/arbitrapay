@@ -1,5 +1,9 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
 import {
+  type SecurityDepositCardItem,
+  SecurityDepositRequestCard,
+} from "@/components/admin-dashboard/SecurityDepositRequestCard";
+import {
   type SecurityDepositDateFilter,
   type SecurityDepositTab,
   useAdminSecurityDeposits,
@@ -7,10 +11,10 @@ import {
 import { styles } from "@/screens/admin-dashboard/SecurityDeposistsRequests.styles";
 import { Ionicons } from "@expo/vector-icons";
 import { memo, useCallback, useMemo, useState } from "react";
+import { Href, router } from "expo-router";
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   Text,
   TextInput,
   TouchableOpacity,
@@ -18,47 +22,16 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-type SecurityDepositCardItem = {
-  id: string;
-  depositMethod: "UPI" | "BANK_TRANSFER";
-  amount: number;
-  createdAt: string | null;
-  user: {
-    avatar: string | null;
-    email: string | null;
-    name: string | null;
-  };
-  bankAccount: {
-    bankName: string | null;
-    accountNumber: string | null;
-  } | null;
-};
-
 const DATE_FILTER_OPTIONS: {
   key: SecurityDepositDateFilter;
   label: string;
   shortLabel: string;
 }[] = [
-  { key: "all", label: "All Time", shortLabel: "All" },
-  { key: "24h", label: "Last 24 hours", shortLabel: "24h" },
-  { key: "7d", label: "Last 7 days", shortLabel: "7d" },
-  { key: "30d", label: "Last 30 days", shortLabel: "30d" },
-];
-
-const TAB_LABELS: Record<SecurityDepositTab, string> = {
-  new: "New",
-  approved: "Approved",
-  pending: "Pending",
-};
-
-function maskAccountNumber(accountNumber?: string | null) {
-  if (!accountNumber) {
-    return "Bank details not provided";
-  }
-
-  const lastFourDigits = accountNumber.slice(-4);
-  return `**** **** **** ${lastFourDigits}`;
-}
+    { key: "all", label: "All Time", shortLabel: "All" },
+    { key: "24h", label: "Last 24 hours", shortLabel: "24h" },
+    { key: "7d", label: "Last 7 days", shortLabel: "7d" },
+    { key: "30d", label: "Last 30 days", shortLabel: "30d" },
+  ];
 
 function formatAmount(amount: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -66,165 +39,6 @@ function formatAmount(amount: number) {
     minimumFractionDigits: amount % 1 === 0 ? 0 : 2,
   }).format(amount);
 }
-
-function formatDate(value?: string | null) {
-  if (!value) {
-    return "Not available";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Not available";
-  }
-
-  const datePart = new Intl.DateTimeFormat("en-IN", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(date);
-  const timePart = new Intl.DateTimeFormat("en-IN", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(date);
-
-  return `${datePart} (${timePart})`;
-}
-
-function formatPaymentMethod(method: "UPI" | "BANK_TRANSFER") {
-  return method === "BANK_TRANSFER" ? "Bank Transfer" : "UPI";
-}
-
-type SecurityDepositCardProps = {
-  item: SecurityDepositCardItem;
-  tab: SecurityDepositTab;
-  actionDepositId: string | null;
-  actionStatus: "approved" | "pending" | null;
-  onApprove: (depositId: string) => void;
-  onPending: (depositId: string) => void;
-};
-
-const SecurityDepositCard = memo(function SecurityDepositCard({
-  item,
-  tab,
-  actionDepositId,
-  actionStatus,
-  onApprove,
-  onPending,
-}: SecurityDepositCardProps) {
-  const displayName =
-    !item.user.name?.trim() || item.user.name.trim() === "User"
-      ? "User"
-      : item.user.name.trim();
-  const avatarCharacter = displayName.charAt(0).toUpperCase() || "U";
-  const bankName = item.bankAccount?.bankName?.trim() || "Bank details not provided";
-  const accountNumberLabel = item.bankAccount?.accountNumber
-    ? maskAccountNumber(item.bankAccount.accountNumber)
-    : "Bank details not provided";
-  const isUpdating = actionDepositId === item.id;
-
-  return (
-    <View style={styles.card}>
-      <View style={styles.topRow}>
-        <View style={styles.avatar}>
-          {item.user.avatar ? (
-            <Image source={{ uri: item.user.avatar }} style={styles.avatarImage} />
-          ) : (
-            <Text style={styles.avatarText}>{avatarCharacter}</Text>
-          )}
-        </View>
-
-        <View style={styles.info}>
-          <Text style={styles.name}>{displayName}</Text>
-          <Text style={styles.email}>{item.user.email || "Not available"}</Text>
-        </View>
-
-        <View style={styles.amountWrap}>
-          <Text style={styles.amount}>₹ {formatAmount(item.amount)}</Text>
-          <Text style={styles.date}>{formatDate(item.createdAt)}</Text>
-        </View>
-      </View>
-
-      <View style={styles.methodRow}>
-        <View style={styles.methodChip}>
-          <Ionicons
-            name={item.depositMethod === "UPI" ? "flash-outline" : "card-outline"}
-            size={12}
-            color="#A78BFA"
-          />
-          <Text style={styles.methodText}>{formatPaymentMethod(item.depositMethod)}</Text>
-        </View>
-
-        {tab !== "new" && (
-          <View
-            style={[
-              styles.badge,
-              tab === "approved" ? styles.approvedBadge : styles.pendingBadge,
-            ]}
-          >
-            <Text style={styles.badgeText}>{TAB_LABELS[tab]}</Text>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.details}>
-        <View style={styles.detailRow}>
-          <Ionicons name="business-outline" size={14} color="#94A3B8" />
-          <Text style={styles.detail}>{bankName}</Text>
-        </View>
-
-        <View style={styles.detailRow}>
-          <Ionicons name="card-outline" size={14} color="#94A3B8" />
-          <Text style={styles.detail}>{accountNumberLabel}</Text>
-        </View>
-      </View>
-
-      <View style={styles.actions}>
-        {tab !== "approved" && (
-          <TouchableOpacity
-            style={[styles.approveBtn, isUpdating && actionStatus === "approved" && styles.disabledBtn]}
-            disabled={isUpdating}
-            onPress={() => onApprove(item.id)}
-          >
-            <View style={styles.btnInner}>
-              {isUpdating && actionStatus === "approved" ? (
-                <ActivityIndicator size="small" color="#22C55E" />
-              ) : (
-                <Ionicons name="checkmark" size={14} color="#22C55E" />
-              )}
-              <Text style={styles.approveText}>Approve</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-
-        {tab !== "pending" && (
-          <TouchableOpacity
-            style={[styles.pendingBtn, isUpdating && actionStatus === "pending" && styles.disabledBtn]}
-            disabled={isUpdating}
-            onPress={() => onPending(item.id)}
-          >
-            <View style={styles.btnInner}>
-              {isUpdating && actionStatus === "pending" ? (
-                <ActivityIndicator size="small" color="#FBBF24" />
-              ) : (
-                <Ionicons name="time-outline" size={14} color="#FBBF24" />
-              )}
-              <Text style={styles.pendingText}>Pending</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-
-        <TouchableOpacity style={[styles.viewBtn, styles.viewBtnDisabled]} disabled>
-          <View style={styles.btnInner}>
-            <Ionicons name="eye-outline" size={14} color="#A5B4FC" />
-            <Text style={styles.viewText}>View</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-});
 
 const EmptyState = memo(function EmptyState({
   tab,
@@ -288,18 +102,32 @@ export default function SecurityDeposistsRequests() {
     [summary.approvedCount, summary.newCount, summary.pendingCount]
   );
 
+  const handleViewDeposit = useCallback((depositId: string, tab: SecurityDepositTab) => {
+    router.push(
+      `/user-security-deposit?depositId=${depositId}&tab=${tab}` as Href
+    );
+  }, []);
+
   const renderCard = useCallback(
     ({ item }: { item: SecurityDepositCardItem }) => (
-      <SecurityDepositCard
+      <SecurityDepositRequestCard
         item={item}
         tab={activeTab}
         actionDepositId={actionDepositId}
         actionStatus={actionStatus}
         onApprove={approveDeposit}
         onPending={markDepositPending}
+        onView={handleViewDeposit}
       />
     ),
-    [actionDepositId, actionStatus, activeTab, approveDeposit, markDepositPending]
+    [
+      actionDepositId,
+      actionStatus,
+      activeTab,
+      approveDeposit,
+      handleViewDeposit,
+      markDepositPending,
+    ]
   );
 
   const keyExtractor = useCallback((item: SecurityDepositCardItem) => item.id, []);
