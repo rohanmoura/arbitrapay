@@ -16,29 +16,28 @@ function AuthGatedNavigation() {
     return <FullScreenLoader />;
   }
 
+  const authenticatedScreens = [
+    <Stack.Screen key="tabs" name="(tabs)" />,
+    <Stack.Screen key="account-activation" name="account-activation/index" />,
+    <Stack.Screen key="ai-assistant" name="ai-assistant/index" />,
+    <Stack.Screen key="bank-account" name="bank-account/index" />,
+    <Stack.Screen key="help-center" name="help-center/index" />,
+    <Stack.Screen key="live-deposit" name="live-deposit/index" />,
+    <Stack.Screen key="payment-history" name="payment-history/index" />,
+    <Stack.Screen key="referral" name="referral/index" />,
+    <Stack.Screen key="security-deposit" name="security-deposit/index" />,
+    <Stack.Screen key="updates" name="updates/index" />,
+    <Stack.Screen key="user-account-activations" name="user-account-activations/index" />,
+    <Stack.Screen key="user-bank-account" name="user-bank-account/index" />,
+    <Stack.Screen key="user-detail" name="user-detail/index" />,
+    <Stack.Screen key="user-security-deposit" name="user-security-deposit/index" />,
+    <Stack.Screen key="withdrawal" name="withdrawal/index" />,
+    <Stack.Screen key="security" name="security" />,
+  ];
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {session ? (
-        <>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="account-activation/index" />
-          <Stack.Screen name="ai-assistant/index" />
-          <Stack.Screen name="bank-account/index" />
-          <Stack.Screen name="help-center/index" />
-          <Stack.Screen name="live-deposit/index" />
-          <Stack.Screen name="payment-history/index" />
-          <Stack.Screen name="referral/index" />
-          <Stack.Screen name="security-deposit/index" />
-          <Stack.Screen name="updates/index" />
-          <Stack.Screen name="user-bank-account/index" />
-          <Stack.Screen name="user-detail/index" />
-          <Stack.Screen name="user-security-deposit/index" />
-          <Stack.Screen name="withdrawal/index" />
-          <Stack.Screen name="security" />
-        </>
-      ) : (
-        <Stack.Screen name="(auth)" />
-      )}
+      {session ? authenticatedScreens : <Stack.Screen name="(auth)" />}
     </Stack>
   );
 }
