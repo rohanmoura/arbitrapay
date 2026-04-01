@@ -19,6 +19,7 @@ import AccountActivationsScreen from "../admin-dashboard/AccountActivationsScree
 import BankAccountsScreen from "../admin-dashboard/BankAccountScreen";
 import LiveDepositScreen from "../admin-dashboard/LiveDepositScreen";
 import SecurityDeposistsRequests from "../admin-dashboard/SecurityDepositsRequests";
+import WithdrawalsRequests from "../admin-dashboard/WithdrawalsRequests";
 
 const ADMIN_SECTIONS: AdminSidebarItem[] = [
   { key: "dashboard", label: "Dashboard", icon: "grid-outline" },
@@ -27,6 +28,7 @@ const ADMIN_SECTIONS: AdminSidebarItem[] = [
   { key: "deposits", label: "Deposits", icon: "wallet-outline" },
   { key: "account_activations", label: "Account Activations", icon: "checkmark-circle-outline" },
   { key: "live_deposits", label: "Live Deposits", icon: "pulse-outline" },
+  { key: "withdrawals", label: "Withdrawals", icon: "arrow-down-outline" },
   { key: "support_tickets", label: "Support Tickets", icon: "headset-outline" },
   { key: "updates", label: "Updates", icon: "megaphone-outline" },
   { key: "settings", label: "Settings", icon: "settings-outline" },
@@ -52,6 +54,9 @@ export default function AdminDashboard() {
     }
     if (activeSection === "live_deposits") {
       return <LiveDepositScreen />;
+    }
+    if (activeSection === "withdrawals") {
+      return <WithdrawalsRequests />;
     }
 
     return (
