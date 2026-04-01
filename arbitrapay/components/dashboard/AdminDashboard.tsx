@@ -15,9 +15,10 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import BankAccountsScreen from "../admin-dashboard/BankAccountScreen";
-import SecurityDeposistsRequests from "../admin-dashboard/SecurityDepositsRequests";
 import AccountActivationsScreen from "../admin-dashboard/AccountActivationsScreen";
+import BankAccountsScreen from "../admin-dashboard/BankAccountScreen";
+import LiveDepositScreen from "../admin-dashboard/LiveDepositScreen";
+import SecurityDeposistsRequests from "../admin-dashboard/SecurityDepositsRequests";
 
 const ADMIN_SECTIONS: AdminSidebarItem[] = [
   { key: "dashboard", label: "Dashboard", icon: "grid-outline" },
@@ -48,6 +49,9 @@ export default function AdminDashboard() {
     }
     if (activeSection === "account_activations") {
       return <AccountActivationsScreen />;
+    }
+    if (activeSection === "live_deposits") {
+      return <LiveDepositScreen />;
     }
 
     return (

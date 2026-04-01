@@ -54,11 +54,13 @@ function maskAccountNumber(accountNumber: string) {
 type ActivationRequestCardProps = {
   item: ActivationRequestCardItem;
   onView: (item: ActivationRequestCardItem) => void;
+  actionLabel?: string;
 };
 
 export const ActivationRequestCard = memo(function ActivationRequestCard({
   item,
   onView,
+  actionLabel = "View",
 }: ActivationRequestCardProps) {
   const [showFull, setShowFull] = useState(false);
   const displayName = item.user.name?.trim() || "User";
@@ -128,7 +130,7 @@ export const ActivationRequestCard = memo(function ActivationRequestCard({
         <View />
 
         <TouchableOpacity style={styles.viewBtn} onPress={handleView}>
-          <Text style={styles.viewText}>View</Text>
+          <Text style={styles.viewText}>{actionLabel}</Text>
         </TouchableOpacity>
       </View>
     </View>
