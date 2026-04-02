@@ -1,4 +1,5 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
+import { DEFAULT_PROFILE_DISPLAY_NAME, getProfileDisplayName } from "@/services/profileService";
 import {
   type AdminUserProfileRecord,
   fetchActivatedUserIds,
@@ -70,7 +71,9 @@ const UserCard = memo(function UserCard({
   onSuspendUser,
 }: UserCardProps) {
   const name = item.name?.trim();
-  const displayName = !name || name === "User" ? `User ${index + 1}` : name;
+  const displayName = !name || name === "User"
+    ? `${DEFAULT_PROFILE_DISPLAY_NAME} ${index + 1}`
+    : getProfileDisplayName(name);
   const suspended = isUserSuspended(item.status);
   const avatarCharacter = displayName.charAt(0).toUpperCase();
   const isSuspending = actionUserId === item.id;

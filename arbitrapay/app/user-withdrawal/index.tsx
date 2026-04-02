@@ -1,4 +1,5 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
+import { getProfileDisplayName } from "@/services/profileService";
 import {
   WithdrawalRequestCard,
   formatWithdrawalAmount,
@@ -88,10 +89,7 @@ export default function UserWithdrawal() {
     router.back();
   }, [loading, resolvedWithdrawalId, selectedWithdrawal]);
 
-  const displayName =
-    !selectedWithdrawal?.user.name?.trim() || selectedWithdrawal.user.name.trim() === "User"
-      ? "User"
-      : selectedWithdrawal.user.name.trim();
+  const displayName = getProfileDisplayName(selectedWithdrawal?.user.name);
   const avatarCharacter = displayName.charAt(0).toUpperCase() || "U";
   const currentTab =
     selectedWithdrawal?.status === "approved"

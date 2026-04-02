@@ -1,4 +1,5 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
+import { getProfileDisplayName } from "@/services/profileService";
 import { useAdminSupportTickets } from "@/hooks/useAdminSupportTickets";
 import { styles } from "@/screens/admin-dashboard/SupportTickets.styles";
 import { type AdminSupportTicket } from "@/services/adminSupportTicketsService";
@@ -71,10 +72,7 @@ const TicketCard = memo(function TicketCard({
   onDelete: (ticketId: string) => void;
   onViewUser: (userId: string) => void;
 }) {
-  const displayName =
-    !item.user.name?.trim() || item.user.name.trim() === "User"
-      ? "User"
-      : item.user.name.trim();
+  const displayName = getProfileDisplayName(item.user.name);
   const avatarCharacter = displayName.charAt(0).toUpperCase() || "U";
   const isUpdating = actionTicketId === item.id;
 

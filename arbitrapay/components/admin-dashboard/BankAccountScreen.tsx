@@ -1,4 +1,5 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
+import { getProfileDisplayName } from "@/services/profileService";
 import {
   fetchAdminBankAccountsData,
   type AdminBankAccountRecord,
@@ -74,10 +75,7 @@ const BankAccountCard = memo(function BankAccountCard({
 }: BankAccountCardProps) {
   const [showFull, setShowFull] = useState(false);
   const suspended = isUserSuspended(item.user.status);
-  const displayName =
-    !item.user.name?.trim() || item.user.name.trim() === "User"
-      ? "User"
-      : item.user.name.trim();
+  const displayName = getProfileDisplayName(item.user.name);
   const avatarCharacter = displayName.charAt(0).toUpperCase() || "U";
 
   return (

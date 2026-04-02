@@ -8,6 +8,7 @@ export type AdminUserProfileRecord = {
   email: string | null;
   name: string | null;
   phone: string | null;
+  telegram_id: string | null;
   status: string | null;
 };
 
@@ -104,7 +105,7 @@ export async function fetchAdminUsers(limit: number, sort: AdminUserSort) {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, avatar, email, name, phone, status")
+    .select("id, avatar, email, name, phone, telegram_id, status")
     .eq("role", USER_ROLE)
     .order("email", { ascending, nullsFirst: false })
     .range(0, Math.max(limit - 1, 0));
@@ -121,7 +122,7 @@ export async function fetchAdminUserDetail(userId: string): Promise<AdminUserDet
     await Promise.all([
       supabase
         .from("profiles")
-        .select("id, avatar, email, name, phone, status, created_at, referral_code")
+        .select("id, avatar, email, name, phone, telegram_id, status, created_at, referral_code")
         .eq("id", userId)
         .eq("role", USER_ROLE)
         .maybeSingle(),
@@ -200,7 +201,7 @@ export async function fetchAdminUserByEmail(email: string) {
 
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, avatar, email, name, phone, status")
+    .select("id, avatar, email, name, phone, telegram_id, status")
     .eq("role", USER_ROLE)
     .ilike("email", normalizedEmail)
     .maybeSingle();
@@ -221,7 +222,7 @@ export async function suspendAdminUser(userId: string) {
     })
     .eq("id", userId)
     .eq("role", USER_ROLE)
-    .select("id, avatar, email, name, phone, status")
+    .select("id, avatar, email, name, phone, telegram_id, status")
     .single();
 
   if (error) {

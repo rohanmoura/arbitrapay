@@ -1,5 +1,7 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
+import TelegramRequiredModal from "@/components/TelegramRequiredModal";
 import { useBankAccounts } from "@/hooks/useBankAccounts";
+import { useTelegramEnforcement } from "@/hooks/useTelegramEnforcement";
 import { styles } from "@/screens/feature-compo/BankAccount.style";
 import { BankAccountRecord } from "@/services/bankAccountService";
 import { Ionicons } from "@expo/vector-icons";
@@ -22,6 +24,11 @@ export default function BankAccounts() {
 
     const router = useRouter();
     const holderRef = useRef<TextInput>(null);
+    const {
+        telegramPromptVisible,
+        showTelegramPrompt,
+        closeTelegramPrompt,
+    } = useTelegramEnforcement();
     const {
         loading,
         submitting,
@@ -50,6 +57,10 @@ export default function BankAccounts() {
     } = useBankAccounts();
 
     const openAddModal = () => {
+        if (showTelegramPrompt()) {
+            return;
+        }
+
         openModal();
         setTimeout(() => holderRef.current?.focus(), 200);
     };
@@ -469,6 +480,11 @@ export default function BankAccounts() {
                 </View>
 
             )}
+
+            <TelegramRequiredModal
+                visible={telegramPromptVisible}
+                onClose={closeTelegramPrompt}
+            />
 
         </SafeAreaView>
 

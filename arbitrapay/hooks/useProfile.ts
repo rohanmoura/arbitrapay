@@ -8,6 +8,7 @@ import {
   DEFAULT_PROFILE_EMAIL,
   DEFAULT_PROFILE_NAME,
   fetchProfile,
+  getProfileDisplayName,
   updateProfile,
 } from "@/services/profileService";
 import { pickImageFromGallery, uploadProfileAvatar } from "@/utils/imageUpload";
@@ -46,7 +47,7 @@ function mapProfileToForm(profile: {
   return {
     avatar: profile.avatar,
     email: profile.email || DEFAULT_PROFILE_EMAIL,
-    name: profile.name || DEFAULT_PROFILE_NAME,
+    name: getProfileDisplayName(profile.name),
     phone: normalizePhone(profile.phone),
     telegramId: profile.telegram_id?.trim() || "",
   };

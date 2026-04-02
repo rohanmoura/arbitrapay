@@ -1,5 +1,6 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
 import { styles } from "@/screens/admin-dashboard/UserDetail.styles";
+import { getProfileDisplayName } from "@/services/profileService";
 import {
   fetchAdminUserDetail,
   isUserSuspended,
@@ -185,10 +186,7 @@ export default function UserDetailScreen() {
   const { profile, bankAccountCount, approvedSecurityDepositTotal, approvedActivationCount } =
     detail;
   const suspended = isUserSuspended(profile.status);
-  const displayName =
-    !profile.name?.trim() || profile.name.trim() === "User"
-      ? "User"
-      : profile.name.trim();
+  const displayName = getProfileDisplayName(profile.name);
   const avatarFallback = displayName.charAt(0).toUpperCase() || "U";
   const hasBankAccount = bankAccountCount > 0;
 
@@ -265,6 +263,9 @@ export default function UserDetailScreen() {
           <Text style={styles.infoText}>Joined: {formatJoinedDate(profile.created_at)}</Text>
           <Text style={styles.infoText}>
             Phone: {profile.phone?.trim() || "Not available"}
+          </Text>
+          <Text style={styles.infoText}>
+            Telegram ID: {profile.telegram_id?.trim() || "Not provided"}
           </Text>
           <Text style={styles.infoText}>
             Referral: {profile.referral_code?.trim() || "Not given"}

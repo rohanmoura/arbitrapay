@@ -1,8 +1,10 @@
 import HeaderBar from "@/components/dashboard-compo/HeaderBar";
 import StatsGrid from "@/components/dashboard-compo/StatsGrid";
+import TelegramRequiredModal from "@/components/TelegramRequiredModal";
 import WalletHero from "@/components/dashboard-compo/WalletCard";
 import FullScreenLoader from "@/components/FullScreenLoader";
 import { useFinancialSummary } from "@/hooks/useFinancialSummary";
+import { useTelegramEnforcement } from "@/hooks/useTelegramEnforcement";
 import { styles } from "@/screens/dashboard/UserDashboard.styles";
 
 import { useRef, useState } from "react";
@@ -21,6 +23,10 @@ export default function UserDashboard() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { loading, summary } = useFinancialSummary();
+  const {
+    telegramPromptVisible,
+    closeTelegramPrompt,
+  } = useTelegramEnforcement({ promptOnMount: true });
 
   const openMenu = () => {
     setSidebarOpen(true);
@@ -84,6 +90,11 @@ export default function UserDashboard() {
 
       {/* FLOATING SUPPORT BUTTON */}
       <FloatingTelegramButton scrollY={scrollY} />
+
+      <TelegramRequiredModal
+        visible={telegramPromptVisible}
+        onClose={closeTelegramPrompt}
+      />
 
     </View>
   );

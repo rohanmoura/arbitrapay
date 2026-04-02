@@ -1,4 +1,5 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
+import { getProfileDisplayName } from "@/services/profileService";
 import {
   SecurityDepositRequestCard,
   formatSecurityDepositAmount,
@@ -86,10 +87,7 @@ export default function UserSecurityDeposit() {
     router.back();
   }, [loading, resolvedDepositId, selectedDeposit]);
 
-  const displayName =
-    !selectedDeposit?.user.name?.trim() || selectedDeposit.user.name.trim() === "User"
-      ? "User"
-      : selectedDeposit.user.name.trim();
+  const displayName = getProfileDisplayName(selectedDeposit?.user.name);
   const avatarCharacter = displayName.charAt(0).toUpperCase() || "U";
   const currentTab = selectedDeposit
     ? getSecurityDepositCardTab({

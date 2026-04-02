@@ -1,4 +1,5 @@
 import { styles } from "@/screens/admin-dashboard/WithdrawalsRequests.styles";
+import { getProfileDisplayName } from "@/services/profileService";
 import { Ionicons } from "@expo/vector-icons";
 import { memo } from "react";
 import {
@@ -97,10 +98,7 @@ export const WithdrawalRequestCard = memo(function WithdrawalRequestCard({
   onPending,
   onView,
 }: WithdrawalRequestCardProps) {
-  const displayName =
-    !item.user.name?.trim() || item.user.name.trim() === "User"
-      ? "User"
-      : item.user.name.trim();
+  const displayName = getProfileDisplayName(item.user.name);
   const avatarCharacter = displayName.charAt(0).toUpperCase() || "U";
   const bankName = item.bankAccount?.bankName?.trim() || "Bank details not provided";
   const holderName = item.bankAccount?.accountHolderName?.trim() || "Not available";

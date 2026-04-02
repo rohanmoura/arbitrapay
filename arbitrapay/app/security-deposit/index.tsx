@@ -1,6 +1,8 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
+import TelegramRequiredModal from "@/components/TelegramRequiredModal";
 import { useFinancialSummary } from "@/hooks/useFinancialSummary";
 import { useSecurityDeposit } from "@/hooks/useSecurityDeposit";
+import { useTelegramEnforcement } from "@/hooks/useTelegramEnforcement";
 import {
     buildTelegramUrl,
     fetchAdminTelegramId,
@@ -24,6 +26,11 @@ export default function SecurityDeposit() {
 
     const router = useRouter();
     const { loading: summaryLoading, summary } = useFinancialSummary();
+    const {
+        telegramPromptVisible,
+        showTelegramPrompt,
+        closeTelegramPrompt,
+    } = useTelegramEnforcement();
     const {
         loading,
         submitting,
@@ -69,6 +76,14 @@ export default function SecurityDeposit() {
         if (supported) {
             await Linking.openURL(telegramUrl);
         }
+    };
+
+    const handleSubmitDeposit = () => {
+        if (showTelegramPrompt()) {
+            return;
+        }
+
+        void submitDeposit();
     };
 
     if (loading || summaryLoading) {
@@ -423,7 +438,7 @@ export default function SecurityDeposit() {
                             (!isValid || submitting || pickingScreenshot) && styles.submitDisabled
                         ]}
                         disabled={!isValid || submitting || pickingScreenshot}
-                        onPress={submitDeposit}
+                        onPress={handleSubmitDeposit}
                     >
 
                         {submitting ? (
@@ -451,6 +466,11 @@ export default function SecurityDeposit() {
                 </View>
 
             )}
+
+            <TelegramRequiredModal
+                visible={telegramPromptVisible}
+                onClose={closeTelegramPrompt}
+            />
 
         </SafeAreaView>
 

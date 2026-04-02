@@ -1,4 +1,5 @@
 import { styles } from "@/screens/admin-dashboard/SecurityDeposistsRequests.styles";
+import { getProfileDisplayName } from "@/services/profileService";
 import { Ionicons } from "@expo/vector-icons";
 import { memo } from "react";
 import {
@@ -119,10 +120,7 @@ export const SecurityDepositRequestCard = memo(function SecurityDepositRequestCa
   onPending,
   onView,
 }: SecurityDepositRequestCardProps) {
-  const displayName =
-    !item.user.name?.trim() || item.user.name.trim() === "User"
-      ? "User"
-      : item.user.name.trim();
+  const displayName = getProfileDisplayName(item.user.name);
   const avatarCharacter = displayName.charAt(0).toUpperCase() || "U";
   const bankName = item.bankAccount?.bankName?.trim() || "Bank details not provided";
   const accountNumberLabel = item.bankAccount?.accountNumber

@@ -18,6 +18,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getProfileDisplayName } from "@/services/profileService";
 
 function formatCreatedAt(value?: string | null) {
   if (!value) {
@@ -215,10 +216,7 @@ export default function UserAccountActivationsScreen() {
     router.back();
   }, [loading, resolvedRequestId, selectedRequest]);
 
-  const displayName =
-    !selectedRequest?.user.name?.trim() || selectedRequest.user.name.trim() === "User"
-      ? "User"
-      : selectedRequest.user.name.trim();
+  const displayName = getProfileDisplayName(selectedRequest?.user.name);
   const avatarCharacter = displayName.charAt(0).toUpperCase() || "U";
   const isActivated = selectedRequest?.status === "approved";
 

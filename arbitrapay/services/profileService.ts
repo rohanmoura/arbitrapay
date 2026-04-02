@@ -2,6 +2,7 @@ import { supabase } from "@/lib/supabase";
 
 export const DEFAULT_PROFILE_NAME = "User";
 export const DEFAULT_PROFILE_EMAIL = "user@email.com";
+export const DEFAULT_PROFILE_DISPLAY_NAME = "Agent";
 
 export type ProfileRecord = {
   avatar: string | null;
@@ -24,6 +25,23 @@ export type UpdateProfileInput = {
   phone?: string | null;
   telegram_id?: string | null;
 };
+
+export function hasTelegramId(value?: string | null) {
+  return Boolean(value?.trim());
+}
+
+export function getProfileDisplayName(
+  name?: string | null,
+  fallback = DEFAULT_PROFILE_DISPLAY_NAME
+) {
+  const trimmed = name?.trim();
+
+  if (!trimmed || trimmed === DEFAULT_PROFILE_NAME) {
+    return fallback;
+  }
+
+  return trimmed;
+}
 
 export async function fetchProfile(userId: string, fallbackEmail?: string | null) {
   const { data, error } = await supabase

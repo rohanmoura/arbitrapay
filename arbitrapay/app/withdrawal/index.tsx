@@ -1,4 +1,6 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
+import TelegramRequiredModal from "@/components/TelegramRequiredModal";
+import { useTelegramEnforcement } from "@/hooks/useTelegramEnforcement";
 import { useWithdrawals } from "@/hooks/useWithdrawals";
 import { styles } from "@/screens/feature-compo/Withdrawal.styles";
 import { Ionicons } from "@expo/vector-icons";
@@ -21,6 +23,11 @@ function maskAccountNumber(accountNumber: string) {
 
 export default function Withdrawal() {
     const router = useRouter();
+    const {
+        telegramPromptVisible,
+        showTelegramPrompt,
+        closeTelegramPrompt,
+    } = useTelegramEnforcement();
     const {
         loading,
         submitting,
@@ -50,6 +57,22 @@ export default function Withdrawal() {
 
     const handleQuickAmount = (value: number) => {
         setAmount(String(value));
+    };
+
+    const handleAddBankAccount = () => {
+        if (showTelegramPrompt()) {
+            return;
+        }
+
+        router.push("/bank-account" as Href);
+    };
+
+    const handleSubmitWithdrawal = () => {
+        if (showTelegramPrompt()) {
+            return;
+        }
+
+        void submitWithdrawal();
     };
 
     if (loading) {
@@ -209,7 +232,7 @@ export default function Withdrawal() {
 
                             <TouchableOpacity
                                 style={styles.addBankBtn}
-                                onPress={() => router.push("/bank-account" as Href)}
+                                onPress={handleAddBankAccount}
                             >
                                 <Ionicons
                                     name="add-outline"
@@ -261,7 +284,7 @@ export default function Withdrawal() {
                             !canSubmit && styles.submitDisabled
                         ]}
                         disabled={!canSubmit}
-                        onPress={submitWithdrawal}
+                        onPress={handleSubmitWithdrawal}
                     >
                         {submitting ? (
                             <ActivityIndicator size="small" color="#fff" />
@@ -284,6 +307,11 @@ export default function Withdrawal() {
                     <Text style={styles.toastText}>{toast}</Text>
                 </View>
             ) : null}
+
+            <TelegramRequiredModal
+                visible={telegramPromptVisible}
+                onClose={closeTelegramPrompt}
+            />
         </SafeAreaView>
     );
 }

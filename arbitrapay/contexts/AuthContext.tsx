@@ -1,13 +1,17 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
 import { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
 type Profile = {
   id: string;
-  email: string;
-  role: "user" | "admin";
+  email: string | null;
+  role: "user" | "admin" | null;
   status?: string | null;
+  telegram_id?: string | null;
+  name?: string | null;
+  avatar?: string | null;
+  phone?: string | null;
 };
 
 type AuthContextType = {
@@ -42,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   }
 
-  async function fetchOrCreateProfile(userId: string, email?: string | null) {
+  const fetchOrCreateProfile = useCallback(async (userId: string, email?: string | null) => {
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
@@ -78,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       suspendedAlertUserIdRef.current = null;
       setProfile(newProfile);
     }
-  }
+  }, []);
 
   useEffect(() => {
 
@@ -122,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchOrCreateProfile]);
 
   useEffect(() => {
     if (!session?.user?.id) {
@@ -140,11 +144,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           filter: `id=eq.${session.user.id}`,
         },
         async (payload) => {
-          const nextStatus = (payload.new as { status?: string | null }).status;
+          const nextProfile = payload.new as Profile;
+          const nextStatus = nextProfile.status;
 
           if (nextStatus?.trim().toLowerCase() === "suspended") {
             await handleSuspendedSession(session.user.id);
+            return;
           }
+
+          setProfile(nextProfile);
         }
       )
       .subscribe();

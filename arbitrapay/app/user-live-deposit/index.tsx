@@ -1,4 +1,5 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
+import { getProfileDisplayName } from "@/services/profileService";
 import { useAdminLiveDepositDetails } from "@/hooks/useAdminLiveDepositDetails";
 import { styles } from "@/screens/admin-dashboard/UserLiveDeposit.styles";
 import { Ionicons } from "@expo/vector-icons";
@@ -94,10 +95,7 @@ export default function UserLiveDepositScreen() {
     router.back();
   }, [details, loading, resolvedRequestId]);
 
-  const displayName =
-    !details?.user.name?.trim() || details.user.name.trim() === "User"
-      ? "User"
-      : details.user.name.trim();
+  const displayName = getProfileDisplayName(details?.user.name);
   const avatarCharacter = displayName.charAt(0).toUpperCase() || "U";
 
   if (loading) {

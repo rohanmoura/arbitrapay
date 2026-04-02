@@ -1,4 +1,5 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
+import { getProfileDisplayName } from "@/services/profileService";
 import {
   fetchAdminUserBankAccounts,
   type AdminUserBankAccountItem,
@@ -207,10 +208,7 @@ export default function UserBankAccountScreen() {
   const primaryAccount = data?.primaryAccount ?? null;
   const otherAccounts = data?.otherAccounts ?? EMPTY_ACCOUNTS;
   const totalAccounts = data?.totalAccounts ?? 0;
-  const displayName =
-    !data?.user.name?.trim() || data.user.name.trim() === "User"
-      ? "User"
-      : data.user.name.trim();
+  const displayName = getProfileDisplayName(data?.user.name);
   const avatarFallback = displayName.charAt(0).toUpperCase() || "U";
 
   const allAccountsEmpty = useMemo(
