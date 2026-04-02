@@ -194,6 +194,27 @@ export async function fetchAdminLiveDepositDetails(requestId: string) {
   } satisfies AdminLiveDepositDetails;
 }
 
+export async function fetchAdminLiveDepositDetailsByUserId(userId: string) {
+  const { data, error } = await supabase
+    .from("account_activations")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("status", "approved")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data?.id) {
+    return null;
+  }
+
+  return fetchAdminLiveDepositDetails(data.id);
+}
+
 export async function createLiveDeposit(input: {
   userId: string;
   bankAccountId?: string | null;

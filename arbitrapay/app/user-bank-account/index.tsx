@@ -42,6 +42,7 @@ type AccountCardProps = {
   isPrimary?: boolean;
   isVisible: boolean;
   onToggleVisibility: (accountId: string) => void;
+  onViewDetails: (account: AdminUserBankAccountItem) => void;
 };
 
 const EMPTY_ACCOUNTS: AdminUserBankAccountItem[] = [];
@@ -52,6 +53,7 @@ const AccountCard = memo(function AccountCard({
   isPrimary = false,
   isVisible,
   onToggleVisibility,
+  onViewDetails,
 }: AccountCardProps) {
   const handleToggleVisibility = useCallback(() => {
     onToggleVisibility(item.id);
@@ -116,7 +118,7 @@ const AccountCard = memo(function AccountCard({
 
       {item.isActivated && (
         <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.viewBtn}>
+          <TouchableOpacity style={styles.viewBtn} onPress={() => onViewDetails(item)}>
             <Text style={styles.viewText}>View Details</Text>
           </TouchableOpacity>
         </View>
@@ -244,10 +246,15 @@ export default function UserBankAccountScreen() {
           isPrimary={item.itemType === "primary"}
           isVisible={Boolean(visibleMap[item.account.id])}
           onToggleVisibility={toggleVisibility}
+          onViewDetails={(account) =>
+            router.push(
+              `/user-account-activations?userId=${data?.user.id}&bankAccountId=${account.id}` as any
+            )
+          }
         />
       </View>
     ),
-    [otherAccounts, toggleVisibility, visibleMap]
+    [data?.user.id, otherAccounts, toggleVisibility, visibleMap]
   );
 
   const keyExtractor = useCallback((item: AccountListItem) => item.account.id, []);

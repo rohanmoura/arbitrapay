@@ -211,3 +211,23 @@ export async function fetchAdminUserSecurityDepositDetail(depositId: string) {
     ),
   };
 }
+
+export async function fetchAdminUserSecurityDepositDetailByUserId(userId: string) {
+  const { data, error } = await supabase
+    .from("security_deposits")
+    .select("id")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data?.id) {
+    return null;
+  }
+
+  return fetchAdminUserSecurityDepositDetail(data.id);
+}

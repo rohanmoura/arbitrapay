@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import {
   fetchAdminUserSecurityDepositDetail,
+  fetchAdminUserSecurityDepositDetailByUserId,
   type AdminUserSecurityDepositRecord,
 } from "@/services/adminUserSecurityDepositService";
 import {
@@ -30,7 +31,7 @@ function updateLocalStatus(
   );
 }
 
-export function useAdminUserSecurityDeposit(depositId?: string) {
+export function useAdminUserSecurityDeposit(depositId?: string, userId?: string) {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [selectedDeposit, setSelectedDeposit] =
@@ -66,7 +67,7 @@ export function useAdminUserSecurityDeposit(depositId?: string) {
   }, []);
 
   const loadDeposit = useCallback(async () => {
-    if (!depositId) {
+    if (!depositId && !userId) {
       setSelectedDeposit(null);
       setUserDeposits([]);
       setLoading(false);
@@ -75,7 +76,9 @@ export function useAdminUserSecurityDeposit(depositId?: string) {
 
     try {
       setLoading(true);
-      const response = await fetchAdminUserSecurityDepositDetail(depositId);
+      const response = depositId
+        ? await fetchAdminUserSecurityDepositDetail(depositId)
+        : await fetchAdminUserSecurityDepositDetailByUserId(userId!);
 
       if (!response) {
         setSelectedDeposit(null);
@@ -97,7 +100,7 @@ export function useAdminUserSecurityDeposit(depositId?: string) {
     } finally {
       setLoading(false);
     }
-  }, [depositId]);
+  }, [depositId, userId]);
 
   useEffect(() => {
     void loadDeposit();

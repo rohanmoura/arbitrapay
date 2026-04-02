@@ -211,3 +211,23 @@ export async function fetchAdminUserWithdrawalDetail(withdrawalId: string) {
     totalDepositedAmount,
   };
 }
+
+export async function fetchAdminUserWithdrawalDetailByUserId(userId: string) {
+  const { data, error } = await supabase
+    .from("withdrawals")
+    .select("id")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data?.id) {
+    return null;
+  }
+
+  return fetchAdminUserWithdrawalDetail(data.id);
+}

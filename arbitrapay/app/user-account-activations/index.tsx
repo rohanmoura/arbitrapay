@@ -175,10 +175,22 @@ function PlainFieldRow({
 }
 
 export default function UserAccountActivationsScreen() {
-  const params = useLocalSearchParams<{ requestId?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    requestId?: string | string[];
+    userId?: string | string[];
+    bankAccountId?: string | string[];
+  }>();
   const resolvedRequestId = useMemo(
     () => (Array.isArray(params.requestId) ? params.requestId[0] : params.requestId),
     [params.requestId]
+  );
+  const resolvedUserId = useMemo(
+    () => (Array.isArray(params.userId) ? params.userId[0] : params.userId),
+    [params.userId]
+  );
+  const resolvedBankAccountId = useMemo(
+    () => (Array.isArray(params.bankAccountId) ? params.bankAccountId[0] : params.bankAccountId),
+    [params.bankAccountId]
   );
   const {
     loading,
@@ -196,25 +208,26 @@ export default function UserAccountActivationsScreen() {
     copyField,
     approveRequest,
     setRequestPending,
-  } = useAdminAccountActivationDetails(resolvedRequestId);
+  } = useAdminAccountActivationDetails(
+    resolvedRequestId,
+    resolvedUserId,
+    resolvedBankAccountId
+  );
 
   useEffect(() => {
-    if (typeof resolvedRequestId !== "undefined") {
+    if (typeof resolvedRequestId !== "undefined" || typeof resolvedUserId !== "undefined") {
       return;
     }
 
     Alert.alert("Account Activation Error", "No activation request was selected.");
     router.back();
-  }, [resolvedRequestId]);
+  }, [resolvedRequestId, resolvedUserId]);
 
   useEffect(() => {
-    if (loading || !resolvedRequestId || selectedRequest) {
+    if (loading || selectedRequest || resolvedRequestId || resolvedUserId) {
       return;
     }
-
-    Alert.alert("Account Activation Error", "Unable to find this activation request.");
-    router.back();
-  }, [loading, resolvedRequestId, selectedRequest]);
+  }, [loading, resolvedRequestId, resolvedUserId, selectedRequest]);
 
   const displayName = getProfileDisplayName(selectedRequest?.user.name);
   const avatarCharacter = displayName.charAt(0).toUpperCase() || "U";
@@ -226,12 +239,20 @@ export default function UserAccountActivationsScreen() {
       return;
     }
 
-    router.push(`/user-security-deposit?depositId=${latestDepositId}` as Href);
+    router.push(
+      `/user-security-deposit?depositId=${latestDepositId}&userId=${selectedRequest?.user.id}` as Href
+    );
   };
 
   const handleViewOtherActivation = (item: ActivationRequestCardItem) => {
     router.replace(
-      `/user-account-activations?requestId=${item.id}` as Href
+      `/user-account-activations?requestId=${item.id}&userId=${selectedRequest?.user.id}` as Href
+    );
+  };
+
+  const handleSendLiveDeposit = () => {
+    router.push(
+      `/user-live-deposit?requestId=${selectedRequest?.id}&userId=${selectedRequest?.user.id}` as Href
     );
   };
 
@@ -240,7 +261,26 @@ export default function UserAccountActivationsScreen() {
   }
 
   if (!selectedRequest) {
-    return null;
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={22} color="#E2E8F0" />
+          </TouchableOpacity>
+
+          <Text style={styles.headerTitle}>User Account Activation</Text>
+
+          <View style={styles.headerSpacer} />
+        </View>
+
+        <View style={styles.otherWrap}>
+          <Text style={styles.otherTitle}>No account activations found</Text>
+          <Text style={styles.otherSubtitle}>
+            There are no activation requests available for this user yet.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
@@ -504,7 +544,7 @@ export default function UserAccountActivationsScreen() {
                     <Text style={styles.secondaryBtnText}>Set to Pending</Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity style={styles.liveDepositBtn} onPress={() => {}}>
+                  <TouchableOpacity style={styles.liveDepositBtn} onPress={handleSendLiveDeposit}>
                     <Ionicons name="cash-outline" size={14} color="#A5B4FC" />
                     <Text style={styles.liveDepositText}>Send Live Deposit</Text>
                   </TouchableOpacity>

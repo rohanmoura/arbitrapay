@@ -2,6 +2,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   createLiveDeposit,
   fetchAdminLiveDepositDetails,
+  fetchAdminLiveDepositDetailsByUserId,
   type AdminLiveDepositDetails,
   type AdminLiveDepositHistoryItem,
   type AdminLiveDepositTransactionType,
@@ -9,7 +10,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert } from "react-native";
 
-export function useAdminLiveDepositDetails(requestId?: string) {
+export function useAdminLiveDepositDetails(requestId?: string, userId?: string) {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -42,7 +43,7 @@ export function useAdminLiveDepositDetails(requestId?: string) {
   }, []);
 
   const loadDetails = useCallback(async () => {
-    if (!requestId) {
+    if (!requestId && !userId) {
       setDetails(null);
       setLoading(false);
       return;
@@ -50,7 +51,9 @@ export function useAdminLiveDepositDetails(requestId?: string) {
 
     try {
       setLoading(true);
-      const response = await fetchAdminLiveDepositDetails(requestId);
+      const response = requestId
+        ? await fetchAdminLiveDepositDetails(requestId)
+        : await fetchAdminLiveDepositDetailsByUserId(userId!);
       setDetails(response);
       setShowAccountNumber(false);
     } catch (error: any) {
@@ -62,7 +65,7 @@ export function useAdminLiveDepositDetails(requestId?: string) {
     } finally {
       setLoading(false);
     }
-  }, [requestId]);
+  }, [requestId, userId]);
 
   useEffect(() => {
     void loadDetails();

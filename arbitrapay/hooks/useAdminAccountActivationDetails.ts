@@ -2,6 +2,7 @@ import type { ActivationRequestCardItem } from "@/components/admin-dashboard/Act
 import { useAuth } from "@/contexts/AuthContext";
 import {
   fetchAdminAccountActivationDetails,
+  fetchAdminAccountActivationDetailsByUserId,
   updateAdminAccountActivationRequestStatus,
   type AdminAccountActivationDetail,
 } from "@/services/adminAccountActivationDetailsService";
@@ -24,7 +25,11 @@ function updateRequestStatusLocally(
   );
 }
 
-export function useAdminAccountActivationDetails(requestId?: string) {
+export function useAdminAccountActivationDetails(
+  requestId?: string,
+  userId?: string,
+  bankAccountId?: string
+) {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] =
@@ -62,7 +67,7 @@ export function useAdminAccountActivationDetails(requestId?: string) {
   }, []);
 
   const loadRequest = useCallback(async () => {
-    if (!requestId) {
+    if (!requestId && !userId) {
       setSelectedRequest(null);
       setUserRequests([]);
       setTotalRequests(0);
@@ -74,7 +79,9 @@ export function useAdminAccountActivationDetails(requestId?: string) {
 
     try {
       setLoading(true);
-      const response = await fetchAdminAccountActivationDetails(requestId);
+      const response = requestId
+        ? await fetchAdminAccountActivationDetails(requestId)
+        : await fetchAdminAccountActivationDetailsByUserId(userId!, bankAccountId);
 
       if (!response) {
         setSelectedRequest(null);
@@ -104,7 +111,7 @@ export function useAdminAccountActivationDetails(requestId?: string) {
     } finally {
       setLoading(false);
     }
-  }, [requestId]);
+  }, [bankAccountId, requestId, userId]);
 
   useEffect(() => {
     void loadRequest();

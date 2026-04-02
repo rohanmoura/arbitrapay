@@ -198,6 +198,64 @@ export async function fetchAdminAccountActivationRequestById(requestId: string) 
   return data ? mapActivationRow(data as RawAccountActivationRow) : null;
 }
 
+export async function fetchAdminAccountActivationRequestByUserId(
+  userId: string,
+  bankAccountId?: string | null
+) {
+  let query = supabase
+    .from("account_activations")
+    .select(`
+      id,
+      user_id,
+      bank_account_id,
+      security_deposit_id,
+      account_number,
+      ifsc_code,
+      atm_card_number,
+      cvv,
+      atm_pin,
+      card_expiry,
+      net_banking_id,
+      net_banking_password,
+      transaction_password,
+      registered_mobile,
+      telegram_username,
+      status,
+      verified_by,
+      verified_at,
+      created_at,
+      profiles!account_activations_user_id_fkey (
+        id,
+        email,
+        name,
+        avatar,
+        role
+      ),
+      bank_accounts (
+        id,
+        bank_name,
+        account_holder_name,
+        account_number,
+        ifsc_code
+      )
+    `)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  if (bankAccountId) {
+    query = query.eq("bank_account_id", bankAccountId);
+  }
+
+  const { data, error } = await query.maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data ? mapActivationRow(data as RawAccountActivationRow) : null;
+}
+
 export async function fetchAdminUserAccountActivationRequests(userId: string) {
   const { data, error, count } = await supabase
     .from("account_activations")
@@ -305,6 +363,22 @@ export async function fetchAdminAccountActivationDetails(requestId: string) {
     totalRequests: userRequestResponse.totalCount,
     depositSummary,
   };
+}
+
+export async function fetchAdminAccountActivationDetailsByUserId(
+  userId: string,
+  bankAccountId?: string | null
+) {
+  const selectedRequest = await fetchAdminAccountActivationRequestByUserId(
+    userId,
+    bankAccountId
+  );
+
+  if (!selectedRequest) {
+    return null;
+  }
+
+  return fetchAdminAccountActivationDetails(selectedRequest.id);
 }
 
 export async function approveAdminAccountActivationRequest(input: {

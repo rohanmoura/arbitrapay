@@ -41,6 +41,7 @@ function formatCurrency(value: number) {
 export default function UserWithdrawal() {
   const params = useLocalSearchParams<{
     withdrawalId?: string | string[];
+    userId?: string | string[];
     tab?: WithdrawalCardTab | WithdrawalCardTab[];
   }>();
   const resolvedWithdrawalId = useMemo(
@@ -56,6 +57,10 @@ export default function UserWithdrawal() {
 
     return "total" as WithdrawalCardTab;
   }, [params.tab]);
+  const resolvedUserId = useMemo(
+    () => (Array.isArray(params.userId) ? params.userId[0] : params.userId),
+    [params.userId]
+  );
   const {
     loading,
     selectedWithdrawal,
@@ -69,25 +74,22 @@ export default function UserWithdrawal() {
     setShowAccountNumber,
     approveWithdrawal,
     markWithdrawalPending,
-  } = useAdminWithdrawalDetails(resolvedWithdrawalId);
+  } = useAdminWithdrawalDetails(resolvedWithdrawalId, resolvedUserId);
 
   useEffect(() => {
-    if (typeof resolvedWithdrawalId !== "undefined") {
+    if (typeof resolvedWithdrawalId !== "undefined" || typeof resolvedUserId !== "undefined") {
       return;
     }
 
     Alert.alert("Withdrawal Error", "No withdrawal was selected.");
     router.back();
-  }, [resolvedWithdrawalId]);
+  }, [resolvedWithdrawalId, resolvedUserId]);
 
   useEffect(() => {
-    if (loading || !resolvedWithdrawalId || selectedWithdrawal) {
+    if (loading || selectedWithdrawal || resolvedWithdrawalId || resolvedUserId) {
       return;
     }
-
-    Alert.alert("Withdrawal Error", "Unable to find this withdrawal.");
-    router.back();
-  }, [loading, resolvedWithdrawalId, selectedWithdrawal]);
+  }, [loading, resolvedWithdrawalId, resolvedUserId, selectedWithdrawal]);
 
   const displayName = getProfileDisplayName(selectedWithdrawal?.user.name);
   const avatarCharacter = displayName.charAt(0).toUpperCase() || "U";
@@ -119,7 +121,26 @@ export default function UserWithdrawal() {
   }
 
   if (!selectedWithdrawal) {
-    return null;
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={22} color="#E2E8F0" />
+          </TouchableOpacity>
+
+          <Text style={styles.headerTitle}>User Withdrawal</Text>
+
+          <View style={styles.headerSpacer} />
+        </View>
+
+        <View style={styles.otherWrap}>
+          <Text style={styles.otherTitle}>No withdrawals found</Text>
+          <Text style={styles.sectionTitle}>
+            There are no withdrawal requests available for this user yet.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (

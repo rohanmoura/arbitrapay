@@ -68,7 +68,7 @@ const EMPTY_SUMMARY: PaymentHistorySummary = {
   verifiedBankAccounts: 0,
 };
 
-export function usePaymentHistory() {
+export function usePaymentHistory(targetUserId?: string) {
   const { session } = useAuth();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TransactionFilter>("All");
@@ -78,18 +78,24 @@ export function usePaymentHistory() {
   const [visibleTransactionId, setVisibleTransactionId] = useState<string | null>(null);
 
   const loadPaymentHistory = useCallback(async () => {
-    if (!session?.user?.id) {
+    const resolvedUserId = targetUserId || session?.user?.id;
+
+    if (!resolvedUserId) {
       setLoading(false);
+      setSummary(EMPTY_SUMMARY);
+      setItems([]);
       return;
     }
 
     setLoading(true);
 
     try {
-      const result = await fetchPaymentHistoryData(session.user.id);
+      const result = await fetchPaymentHistoryData(resolvedUserId);
       setSummary(result.summary);
       setItems(result.items);
-      await markTransactionsSeen(session.user.id);
+      if (!targetUserId) {
+        await markTransactionsSeen(resolvedUserId);
+      }
     } catch (error: any) {
       Alert.alert(
         "Payment History Error",
@@ -100,7 +106,7 @@ export function usePaymentHistory() {
     } finally {
       setLoading(false);
     }
-  }, [session?.user?.id]);
+  }, [session?.user?.id, targetUserId]);
 
   useFocusEffect(
     useCallback(() => {

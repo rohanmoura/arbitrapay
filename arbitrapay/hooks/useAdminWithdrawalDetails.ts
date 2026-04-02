@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import {
   fetchAdminUserWithdrawalDetail,
+  fetchAdminUserWithdrawalDetailByUserId,
   type AdminUserWithdrawalRecord,
 } from "@/services/adminWithdrawalDetailsService";
 import {
@@ -29,7 +30,7 @@ function updateLocalStatus(
   );
 }
 
-export function useAdminWithdrawalDetails(withdrawalId?: string) {
+export function useAdminWithdrawalDetails(withdrawalId?: string, userId?: string) {
   const { profile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [selectedWithdrawal, setSelectedWithdrawal] =
@@ -42,7 +43,7 @@ export function useAdminWithdrawalDetails(withdrawalId?: string) {
   const [totalDepositedAmount, setTotalDepositedAmount] = useState(0);
 
   const loadWithdrawal = useCallback(async () => {
-    if (!withdrawalId) {
+    if (!withdrawalId && !userId) {
       setSelectedWithdrawal(null);
       setUserWithdrawals([]);
       setTotalDepositedAmount(0);
@@ -52,7 +53,9 @@ export function useAdminWithdrawalDetails(withdrawalId?: string) {
 
     try {
       setLoading(true);
-      const response = await fetchAdminUserWithdrawalDetail(withdrawalId);
+      const response = withdrawalId
+        ? await fetchAdminUserWithdrawalDetail(withdrawalId)
+        : await fetchAdminUserWithdrawalDetailByUserId(userId!);
 
       if (!response) {
         setSelectedWithdrawal(null);
@@ -76,7 +79,7 @@ export function useAdminWithdrawalDetails(withdrawalId?: string) {
     } finally {
       setLoading(false);
     }
-  }, [withdrawalId]);
+  }, [userId, withdrawalId]);
 
   useEffect(() => {
     void loadWithdrawal();

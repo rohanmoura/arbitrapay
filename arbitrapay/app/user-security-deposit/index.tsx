@@ -36,6 +36,7 @@ function maskAccountNumber(accountNumber?: string | null) {
 export default function UserSecurityDeposit() {
   const params = useLocalSearchParams<{
     depositId?: string | string[];
+    userId?: string | string[];
     tab?: SecurityDepositCardTab | SecurityDepositCardTab[];
   }>();
   const resolvedDepositId = useMemo(
@@ -51,6 +52,10 @@ export default function UserSecurityDeposit() {
 
     return "new" as SecurityDepositCardTab;
   }, [params.tab]);
+  const resolvedUserId = useMemo(
+    () => (Array.isArray(params.userId) ? params.userId[0] : params.userId),
+    [params.userId]
+  );
   const {
     loading,
     selectedDeposit,
@@ -67,25 +72,22 @@ export default function UserSecurityDeposit() {
     copyUtr,
     approveDeposit,
     markDepositPending,
-  } = useAdminUserSecurityDeposit(resolvedDepositId);
+  } = useAdminUserSecurityDeposit(resolvedDepositId, resolvedUserId);
 
   useEffect(() => {
-    if (typeof resolvedDepositId !== "undefined") {
+    if (typeof resolvedDepositId !== "undefined" || typeof resolvedUserId !== "undefined") {
       return;
     }
 
     Alert.alert("Security Deposit Error", "No security deposit was selected.");
     router.back();
-  }, [resolvedDepositId]);
+  }, [resolvedDepositId, resolvedUserId]);
 
   useEffect(() => {
-    if (loading || !resolvedDepositId || selectedDeposit) {
+    if (loading || selectedDeposit || resolvedDepositId || resolvedUserId) {
       return;
     }
-
-    Alert.alert("Security Deposit Error", "Unable to find this security deposit.");
-    router.back();
-  }, [loading, resolvedDepositId, selectedDeposit]);
+  }, [loading, resolvedDepositId, resolvedUserId, selectedDeposit]);
 
   const displayName = getProfileDisplayName(selectedDeposit?.user.name);
   const avatarCharacter = displayName.charAt(0).toUpperCase() || "U";
@@ -120,7 +122,26 @@ export default function UserSecurityDeposit() {
   }
 
   if (!selectedDeposit) {
-    return null;
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={22} color="#E2E8F0" />
+          </TouchableOpacity>
+
+          <Text style={styles.headerTitle}>User Security Deposit</Text>
+
+          <View style={styles.headerSpacer} />
+        </View>
+
+        <View style={styles.otherWrap}>
+          <Text style={styles.otherTitle}>No security deposits found</Text>
+          <Text style={styles.sectionTitle}>
+            There are no security deposits available for this user yet.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (

@@ -1,14 +1,14 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
 import { styles } from "@/screens/admin-dashboard/UserDetail.styles";
-import { getProfileDisplayName } from "@/services/profileService";
 import {
   fetchAdminUserDetail,
   isUserSuspended,
   suspendAdminUser,
 } from "@/services/adminUsersService";
+import { getProfileDisplayName } from "@/services/profileService";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
-import { router, useLocalSearchParams } from "expo-router";
+import { Href, router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -273,7 +273,11 @@ export default function UserDetailScreen() {
         </View>
 
         <View style={styles.gridCard}>
-          <TouchableOpacity style={styles.row} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.row}
+            activeOpacity={0.7}
+            onPress={() => router.push(`/user-bank-account?userId=${profile.id}` as Href)}
+          >
             <View style={styles.rowLeft}>
               <Ionicons name="card-outline" size={18} color="#818CF8" />
               <Text style={styles.rowText}>Bank Accounts</Text>
@@ -285,7 +289,11 @@ export default function UserDetailScreen() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.row} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.row}
+            activeOpacity={0.7}
+            onPress={() => router.push(`/user-security-deposit?userId=${profile.id}` as Href)}
+          >
             <View style={styles.rowLeft}>
               <Ionicons name="wallet-outline" size={18} color="#818CF8" />
               <Text style={styles.rowText}>Security Deposits</Text>
@@ -298,7 +306,11 @@ export default function UserDetailScreen() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.row} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.row}
+            activeOpacity={0.7}
+            onPress={() => router.push(`/user-account-activations?userId=${profile.id}` as Href)}
+          >
             <View style={styles.rowLeft}>
               <Ionicons
                 name="shield-checkmark-outline"
@@ -314,7 +326,11 @@ export default function UserDetailScreen() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.row} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.row}
+            activeOpacity={0.7}
+            onPress={() => router.push(`/user-live-deposit?userId=${profile.id}` as Href)}
+          >
             <View style={styles.rowLeft}>
               <Ionicons name="flash-outline" size={18} color="#818CF8" />
               <Text style={styles.rowText}>Live Deposits</Text>
@@ -325,7 +341,11 @@ export default function UserDetailScreen() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.row} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.row}
+            activeOpacity={0.7}
+            onPress={() => router.push(`/user-withdrawal?userId=${profile.id}` as Href)}
+          >
             <View style={styles.rowLeft}>
               <Ionicons
                 name="arrow-down-circle-outline"
@@ -340,7 +360,11 @@ export default function UserDetailScreen() {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.row} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.row}
+            activeOpacity={0.7}
+            onPress={() => router.push(`/user-transactions?userId=${profile.id}` as Href)}
+          >
             <View style={styles.rowLeft}>
               <Ionicons name="receipt-outline" size={18} color="#818CF8" />
               <Text style={styles.rowText}>View Transactions</Text>

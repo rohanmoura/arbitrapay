@@ -57,10 +57,17 @@ function formatDateTime(value?: string | null) {
 }
 
 export default function UserLiveDepositScreen() {
-  const params = useLocalSearchParams<{ requestId?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    requestId?: string | string[];
+    userId?: string | string[];
+  }>();
   const resolvedRequestId = useMemo(
     () => (Array.isArray(params.requestId) ? params.requestId[0] : params.requestId),
     [params.requestId]
+  );
+  const resolvedUserId = useMemo(
+    () => (Array.isArray(params.userId) ? params.userId[0] : params.userId),
+    [params.userId]
   );
   const {
     loading,
@@ -75,25 +82,22 @@ export default function UserLiveDepositScreen() {
     setAmountInput,
     setShowAccountNumber,
     submitDeposit,
-  } = useAdminLiveDepositDetails(resolvedRequestId);
+  } = useAdminLiveDepositDetails(resolvedRequestId, resolvedUserId);
 
   useEffect(() => {
-    if (typeof resolvedRequestId !== "undefined") {
+    if (typeof resolvedRequestId !== "undefined" || typeof resolvedUserId !== "undefined") {
       return;
     }
 
     Alert.alert("Live Deposit Error", "No live deposit request was selected.");
     router.back();
-  }, [resolvedRequestId]);
+  }, [resolvedRequestId, resolvedUserId]);
 
   useEffect(() => {
-    if (loading || !resolvedRequestId || details) {
+    if (loading || details || resolvedRequestId || resolvedUserId) {
       return;
     }
-
-    Alert.alert("Live Deposit Error", "Unable to find this live deposit request.");
-    router.back();
-  }, [details, loading, resolvedRequestId]);
+  }, [details, loading, resolvedRequestId, resolvedUserId]);
 
   const displayName = getProfileDisplayName(details?.user.name);
   const avatarCharacter = displayName.charAt(0).toUpperCase() || "U";
@@ -103,7 +107,26 @@ export default function UserLiveDepositScreen() {
   }
 
   if (!details) {
-    return null;
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={22} color="#E2E8F0" />
+          </TouchableOpacity>
+
+          <Text style={styles.headerTitle}>Send Live Deposit</Text>
+
+          <View style={styles.headerSpacer} />
+        </View>
+
+        <View style={styles.historyCard}>
+          <Text style={styles.sectionTitle}>No approved live deposit route</Text>
+          <Text style={styles.sectionSubtitle}>
+            This user does not have an approved activation ready for live deposits yet.
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (
