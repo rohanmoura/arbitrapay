@@ -1,7 +1,10 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
 import { useFinancialSummary } from "@/hooks/useFinancialSummary";
-import { TELEGRAM_CHANNEL_URL } from "@/components/FloatingTelegramButton";
 import { useSecurityDeposit } from "@/hooks/useSecurityDeposit";
+import {
+    buildTelegramUrl,
+    fetchAdminTelegramId,
+} from "@/services/adminSettingsService";
 import { styles } from "@/screens/feature-compo/SecurityDeposit.styles";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -52,10 +55,19 @@ export default function SecurityDeposit() {
         Boolean(screenshot);
 
     const openTelegram = async () => {
-        const supported = await Linking.canOpenURL(TELEGRAM_CHANNEL_URL);
+        let telegramUrl = buildTelegramUrl();
+
+        try {
+            const telegramId = await fetchAdminTelegramId();
+            telegramUrl = buildTelegramUrl(telegramId);
+        } catch {
+            telegramUrl = buildTelegramUrl();
+        }
+
+        const supported = await Linking.canOpenURL(telegramUrl);
 
         if (supported) {
-            await Linking.openURL(TELEGRAM_CHANNEL_URL);
+            await Linking.openURL(telegramUrl);
         }
     };
 

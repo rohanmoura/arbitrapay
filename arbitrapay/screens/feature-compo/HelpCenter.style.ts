@@ -212,6 +212,10 @@ export const styles = StyleSheet.create({
         fontSize: 14
     },
 
+    inputError: {
+        borderColor: "#EF4444"
+    },
+
     textArea: {
         backgroundColor: "#020617",
         borderRadius: 14,
@@ -223,6 +227,12 @@ export const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: "#1E293B",
         fontSize: 14
+    },
+
+    errorText: {
+        color: "#EF4444",
+        fontSize: 12,
+        marginTop: 6
     },
 
     submitBtn: {

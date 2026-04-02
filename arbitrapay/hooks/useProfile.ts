@@ -17,6 +17,7 @@ type ProfileFormState = {
   email: string;
   name: string;
   phone: string;
+  telegramId: string;
 };
 
 const PHONE_DIGIT_LIMIT = 10;
@@ -40,12 +41,14 @@ function mapProfileToForm(profile: {
   email: string | null;
   name: string | null;
   phone: string | null;
+  telegram_id: string | null;
 }): ProfileFormState {
   return {
     avatar: profile.avatar,
     email: profile.email || DEFAULT_PROFILE_EMAIL,
     name: profile.name || DEFAULT_PROFILE_NAME,
     phone: normalizePhone(profile.phone),
+    telegramId: profile.telegram_id?.trim() || "",
   };
 }
 
@@ -56,6 +59,7 @@ export function useProfile() {
     email: DEFAULT_PROFILE_EMAIL,
     name: DEFAULT_PROFILE_NAME,
     phone: "",
+    telegramId: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -97,6 +101,10 @@ export function useProfile() {
   const setPhone = useCallback((phone: string) => {
     const cleaned = phone.replace(/\D/g, "").slice(0, PHONE_DIGIT_LIMIT);
     setProfile((current) => ({ ...current, phone: cleaned }));
+  }, []);
+
+  const setTelegramId = useCallback((telegramId: string) => {
+    setProfile((current) => ({ ...current, telegramId }));
   }, []);
 
   const pickAvatar = useCallback(async () => {
@@ -141,6 +149,7 @@ export function useProfile() {
         avatar: profile.avatar,
         name: profile.name.trim() || DEFAULT_PROFILE_NAME,
         phone: profile.phone || null,
+        telegram_id: profile.telegramId.trim() || null,
       });
 
       setProfile(mapProfileToForm(updatedProfile));
@@ -150,7 +159,7 @@ export function useProfile() {
     } finally {
       setSaving(false);
     }
-  }, [profile.avatar, profile.name, profile.phone, saving, session?.user?.id, uploadingAvatar]);
+  }, [profile.avatar, profile.name, profile.phone, profile.telegramId, saving, session?.user?.id, uploadingAvatar]);
 
   const logout = useCallback(async () => {
     if (loggingOut) {
@@ -174,6 +183,7 @@ export function useProfile() {
     uploadingAvatar,
     setName,
     setPhone,
+    setTelegramId,
     saveProfile,
     pickAvatar,
     logout,

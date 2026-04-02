@@ -24,6 +24,7 @@ export default function Profile() {
     uploadingAvatar,
     setName,
     setPhone,
+    setTelegramId,
     saveProfile,
     pickAvatar,
     logout,
@@ -113,6 +114,18 @@ export default function Profile() {
               />
 
             </View>
+
+            <Text style={styles.label}>Telegram ID</Text>
+
+            <TextInput
+              value={profile.telegramId}
+              onChangeText={setTelegramId}
+              placeholder="@yourtelegramid"
+              placeholderTextColor="#6B7280"
+              autoCapitalize="none"
+              style={styles.input}
+              editable={!saving && !loggingOut && !uploadingAvatar}
+            />
 
           </View>
 

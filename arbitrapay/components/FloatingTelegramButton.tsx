@@ -8,13 +8,15 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import {
+  buildTelegramUrl,
+  fetchAdminTelegramId,
+} from "@/services/adminSettingsService";
 import { styles } from "./FloatingTelegramButton.styles";
 
 type Props = {
   scrollY?: Animated.Value;
 };
-
-export const TELEGRAM_CHANNEL_URL = "https://t.me/arbitraagent";
 
 export default function FloatingTelegramButton({ scrollY }: Props) {
 
@@ -94,10 +96,19 @@ export default function FloatingTelegramButton({ scrollY }: Props) {
   const openTelegram = async () => {
     if (disabled) return;
 
-    const supported = await Linking.canOpenURL(TELEGRAM_CHANNEL_URL);
+    let telegramUrl = buildTelegramUrl();
+
+    try {
+      const telegramId = await fetchAdminTelegramId();
+      telegramUrl = buildTelegramUrl(telegramId);
+    } catch {
+      telegramUrl = buildTelegramUrl();
+    }
+
+    const supported = await Linking.canOpenURL(telegramUrl);
 
     if (supported) {
-      await Linking.openURL(TELEGRAM_CHANNEL_URL);
+      await Linking.openURL(telegramUrl);
     }
   };
 

@@ -8,6 +8,7 @@ export type ProfileRecord = {
   email: string | null;
   name: string | null;
   phone: string | null;
+  telegram_id: string | null;
 };
 
 export type ProfileAccessRecord = {
@@ -21,12 +22,13 @@ export type UpdateProfileInput = {
   avatar?: string | null;
   name?: string | null;
   phone?: string | null;
+  telegram_id?: string | null;
 };
 
 export async function fetchProfile(userId: string, fallbackEmail?: string | null) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("avatar, email, name, phone")
+    .select("avatar, email, name, phone, telegram_id")
     .eq("id", userId)
     .maybeSingle<ProfileRecord>();
 
@@ -44,7 +46,7 @@ export async function fetchProfile(userId: string, fallbackEmail?: string | null
       id: userId,
       email: fallbackEmail ?? DEFAULT_PROFILE_EMAIL,
     })
-    .select("avatar, email, name, phone")
+    .select("avatar, email, name, phone, telegram_id")
     .single<ProfileRecord>();
 
   if (insertError) {
@@ -62,7 +64,7 @@ export async function updateProfile(userId: string, updates: UpdateProfileInput)
       updated_at: new Date().toISOString(),
     })
     .eq("id", userId)
-    .select("avatar, email, name, phone")
+    .select("avatar, email, name, phone, telegram_id")
     .single<ProfileRecord>();
 
   if (error) {

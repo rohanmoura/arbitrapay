@@ -1,10 +1,10 @@
 import FullScreenLoader from "@/components/FullScreenLoader";
+import { styles } from "@/screens/admin-dashboard/UserDetail.styles";
 import {
   fetchAdminUserDetail,
   isUserSuspended,
   suspendAdminUser,
 } from "@/services/adminUsersService";
-import { styles } from "@/screens/admin-dashboard/UserDetail.styles";
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import { router, useLocalSearchParams } from "expo-router";

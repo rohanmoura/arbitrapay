@@ -2,7 +2,9 @@ import AdminSidebar, {
   type AdminSection,
   type AdminSidebarItem,
 } from "@/components/admin-dashboard/AdminSidebar";
+import AdminTelegramSettingsCard from "@/components/admin-dashboard/AdminTelegramSettingsCard";
 import SecurityDepositSetupCard from "@/components/admin-dashboard/SecurityDepositSetupCard";
+import SupportTicketsScreen from "@/components/admin-dashboard/support-tickets";
 import UsersScreen from "@/components/admin-dashboard/UsersScreen";
 import { useAuth } from "@/contexts/AuthContext";
 import { styles } from "@/screens/dashboard/AdminDashboard.styles";
@@ -31,7 +33,6 @@ const ADMIN_SECTIONS: AdminSidebarItem[] = [
   { key: "withdrawals", label: "Withdrawals", icon: "arrow-down-outline" },
   { key: "support_tickets", label: "Support Tickets", icon: "headset-outline" },
   { key: "updates", label: "Updates", icon: "megaphone-outline" },
-  { key: "settings", label: "Settings", icon: "settings-outline" },
 ];
 
 export default function AdminDashboard() {
@@ -58,6 +59,9 @@ export default function AdminDashboard() {
     if (activeSection === "withdrawals") {
       return <WithdrawalsRequests />;
     }
+    if (activeSection === "support_tickets") {
+      return <SupportTicketsScreen />;
+    }
 
     return (
       <ScrollView
@@ -78,6 +82,7 @@ export default function AdminDashboard() {
         </View>
 
         <SecurityDepositSetupCard />
+        <AdminTelegramSettingsCard />
       </ScrollView>
     );
   };

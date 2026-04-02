@@ -2,7 +2,10 @@ import { useCallback, useMemo, useState } from "react";
 import { Alert, Linking } from "react-native";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { TELEGRAM_CHANNEL_URL } from "@/components/FloatingTelegramButton";
+import {
+  buildTelegramUrl,
+  fetchAdminTelegramId,
+} from "@/services/adminSettingsService";
 import { createSupportTicket } from "@/services/supportTicketService";
 
 const CATEGORIES = [
@@ -20,6 +23,8 @@ export function useHelpCenter() {
     useState<(typeof CATEGORIES)[number]["label"]>("Account Issue");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+  const [telegramId, setTelegramId] = useState("");
+  const [telegramError, setTelegramError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const canSubmit = useMemo(() => {
@@ -31,6 +36,7 @@ export function useHelpCenter() {
       return;
     }
 
+    setTelegramError("");
     setTicketVisible(true);
   }, [submitting]);
 
@@ -39,18 +45,29 @@ export function useHelpCenter() {
       return;
     }
 
+    setTelegramError("");
     setTicketVisible(false);
   }, [submitting]);
 
+  const updateTelegramId = useCallback((value: string) => {
+    setTelegramId(value);
+
+    if (value.trim()) {
+      setTelegramError("");
+    }
+  }, []);
+
   const openTelegram = useCallback(async () => {
     try {
-      const supported = await Linking.canOpenURL(TELEGRAM_CHANNEL_URL);
+      const adminTelegramId = await fetchAdminTelegramId();
+      const telegramUrl = buildTelegramUrl(adminTelegramId);
+      const supported = await Linking.canOpenURL(telegramUrl);
 
       if (!supported) {
         throw new Error("Telegram link is unavailable right now.");
       }
 
-      await Linking.openURL(TELEGRAM_CHANNEL_URL);
+      await Linking.openURL(telegramUrl);
     } catch (error: any) {
       Alert.alert(
         "Telegram Error",
@@ -60,6 +77,13 @@ export function useHelpCenter() {
   }, []);
 
   const submitTicket = useCallback(async () => {
+    if (!telegramId.trim()) {
+      setTelegramError("Telegram ID is required.");
+      return;
+    }
+
+    setTelegramError("");
+
     if (!session?.user?.id || !canSubmit) {
       return;
     }
@@ -73,12 +97,15 @@ export function useHelpCenter() {
           CATEGORIES.find((item) => item.label === category)?.value || "account_issue",
         subject: subject.trim(),
         message: message.trim(),
+        userTelegramId: telegramId.trim(),
       });
 
       setTicketVisible(false);
       setCategory("Account Issue");
       setSubject("");
       setMessage("");
+      setTelegramId("");
+      setTelegramError("");
       Alert.alert(
         "Ticket Submitted",
         "Your support ticket has been created successfully."
@@ -91,7 +118,8 @@ export function useHelpCenter() {
     } finally {
       setSubmitting(false);
     }
-  }, [canSubmit, category, message, session?.user?.id, subject]);
+  }, [canSubmit, category, message, session?.user?.id, subject, telegramId]);
+
 
   return {
     categories: CATEGORIES.map((item) => item.label),
@@ -99,11 +127,14 @@ export function useHelpCenter() {
     category,
     subject,
     message,
+    telegramId,
+    telegramError,
     submitting,
     canSubmit,
     setCategory,
     setSubject,
     setMessage,
+    setTelegramId: updateTelegramId,
     openTelegram,
     openTicketModal,
     closeTicketModal,

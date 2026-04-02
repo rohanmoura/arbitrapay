@@ -25,11 +25,14 @@ export default function HelpCenter() {
         category,
         subject,
         message,
+        telegramId,
+        telegramError,
         submitting,
         canSubmit,
         setCategory,
         setSubject,
         setMessage,
+        setTelegramId,
         openTelegram,
         openTicketModal,
         closeTicketModal,
@@ -231,12 +234,37 @@ export default function HelpCenter() {
                                 />
 
 
+                                {/* Telegram ID */}
+
+                                <Text style={styles.inputLabel}>
+                                    Telegram ID *
+                                </Text>
+
+                                <TextInput
+                                    placeholder="@yourtelegramid"
+                                    placeholderTextColor="#9CA3AF"
+                                    style={[
+                                        styles.input,
+                                        telegramError ? styles.inputError : null
+                                    ]}
+                                    autoCapitalize="none"
+                                    value={telegramId}
+                                    onChangeText={setTelegramId}
+                                />
+
+                                {telegramError ? (
+                                    <Text style={styles.errorText}>
+                                        {telegramError}
+                                    </Text>
+                                ) : null}
+
+
                                 {/* Submit */}
 
                                 <TouchableOpacity style={[
                                     styles.submitBtn,
                                     (!canSubmit || submitting) && { opacity: 0.5 }
-                                ]} disabled={!canSubmit} onPress={submitTicket}>
+                                ]} disabled={!canSubmit || submitting} onPress={submitTicket}>
                                     {submitting ? (
                                         <ActivityIndicator size="small" color="#fff" />
                                     ) : (

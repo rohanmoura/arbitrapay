@@ -20,8 +20,7 @@ export type AdminSection =
   | "live_deposits"
   | "withdrawals"
   | "support_tickets"
-  | "updates"
-  | "settings";
+  | "updates";
 
 export type AdminSidebarItem = {
   key: AdminSection;

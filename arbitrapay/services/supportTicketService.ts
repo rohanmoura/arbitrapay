@@ -9,6 +9,7 @@ export type SupportTicketRecord = {
   status: string | null;
   created_at: string | null;
   updated_at: string | null;
+  user_telegram_id?: string | null;
 };
 
 export async function createSupportTicket(input: {
@@ -16,6 +17,7 @@ export async function createSupportTicket(input: {
   category: string;
   subject: string;
   message: string;
+  userTelegramId?: string;
 }) {
   const { error } = await supabase
     .from("support_tickets")
@@ -25,6 +27,7 @@ export async function createSupportTicket(input: {
       subject: input.subject,
       message: input.message,
       status: "pending",
+      user_telegram_id: input.userTelegramId?.trim() || null,
     });
 
   if (error) {
