@@ -134,10 +134,10 @@ export function useSecurityDeposit() {
   );
 
   const copyUpi = useCallback(async () => {
-    await Clipboard.setStringAsync(SECURITY_DEPOSIT_CONFIG.upiId);
+    await Clipboard.setStringAsync(config.upiId);
     setCopied(true);
     showToast("UPI ID copied");
-  }, [showToast]);
+  }, [config.upiId, showToast]);
 
   const pickScreenshot = useCallback(async () => {
     if (pickingScreenshot || submitting) {

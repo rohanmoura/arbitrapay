@@ -8,12 +8,16 @@ import SupportTicketsScreen from "@/components/admin-dashboard/support-tickets";
 import AdminUpdatesScreen from "@/components/admin-dashboard/updates";
 import UsersScreen from "@/components/admin-dashboard/UsersScreen";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 import { styles } from "@/screens/dashboard/AdminDashboard.styles";
 import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { Href, router } from "expo-router";
+import { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   ScrollView,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -36,10 +40,101 @@ const ADMIN_SECTIONS: AdminSidebarItem[] = [
   { key: "updates", label: "Updates", icon: "megaphone-outline" },
 ];
 
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function formatCount(value: number) {
+  return new Intl.NumberFormat("en-IN", {
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 export default function AdminDashboard() {
   const { profile } = useAuth();
+  const { dashboard, loading, savingBalance, saveBalance } = useAdminDashboard();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
+  const [editingBalance, setEditingBalance] = useState(false);
+  const [balanceInput, setBalanceInput] = useState("");
+
+  useEffect(() => {
+    if (editingBalance) {
+      return;
+    }
+
+    setBalanceInput(String(dashboard.balance.defaultBalance));
+  }, [dashboard.balance.defaultBalance, editingBalance]);
+
+  const balanceCards = useMemo(
+    () => [
+      {
+        key: "total_users",
+        label: "Total Users",
+        value: formatCount(dashboard.insights.totalUsers),
+        icon: "people-outline" as const,
+      },
+      {
+        key: "total_bank_accounts",
+        label: "Total Bank Accounts",
+        value: formatCount(dashboard.insights.totalBankAccounts),
+        icon: "card-outline" as const,
+      },
+      {
+        key: "total_activation_requests",
+        label: "Activation Requests",
+        value: formatCount(dashboard.insights.totalActivationRequests),
+        icon: "checkmark-circle-outline" as const,
+      },
+      {
+        key: "users_with_live_deposits",
+        label: "Users with Live Deposits",
+        value: formatCount(dashboard.insights.usersWithLiveDeposits),
+        icon: "pulse-outline" as const,
+      },
+      {
+        key: "total_security_deposits",
+        label: "Security Deposits",
+        value: formatCount(dashboard.insights.totalSecurityDeposits),
+        icon: "wallet-outline" as const,
+      },
+      {
+        key: "total_withdrawal_requests",
+        label: "Withdrawal Requests",
+        value: formatCount(dashboard.insights.totalWithdrawalRequests),
+        icon: "arrow-down-outline" as const,
+      },
+    ],
+    [dashboard.insights]
+  );
+
+  const handleStartBalanceEdit = () => {
+    setBalanceInput(String(dashboard.balance.defaultBalance));
+    setEditingBalance(true);
+  };
+
+  const handleCancelBalanceEdit = () => {
+    setBalanceInput(String(dashboard.balance.defaultBalance));
+    setEditingBalance(false);
+  };
+
+  const handleSaveBalance = async () => {
+    const nextValue = Number(balanceInput.replace(/,/g, "").trim());
+
+    if (!Number.isFinite(nextValue) || nextValue < 0) {
+      return;
+    }
+
+    const saved = await saveBalance(nextValue);
+
+    if (saved) {
+      setEditingBalance(false);
+    }
+  };
 
   const renderMainContent = () => {
     if (activeSection === "users") {
@@ -74,19 +169,101 @@ export default function AdminDashboard() {
       >
         <View style={styles.balanceCard}>
           <View style={styles.balanceHeader}>
-            <Text style={styles.balanceLabel}>ArbitraPay Balance</Text>
-            <Ionicons name="wallet-outline" size={20} color="#A78BFA" />
+            <View style={styles.balanceTitleWrap}>
+              <Text style={styles.balanceLabel}>ArbitraPay Balance</Text>
+              {/* <Text style={styles.balanceSubLabel}>Default balance plus live approved flows</Text> */}
+            </View>
+
+            <View style={styles.balanceActions}>
+              {editingBalance ? (
+                <>
+                  <TouchableOpacity
+                    style={styles.balanceIconButton}
+                    activeOpacity={0.85}
+                    onPress={handleSaveBalance}
+                    disabled={savingBalance}
+                  >
+                    {savingBalance ? (
+                      <ActivityIndicator size="small" color="#22C55E" />
+                    ) : (
+                      <Ionicons name="checkmark-outline" size={18} color="#22C55E" />
+                    )}
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.balanceIconButton}
+                    activeOpacity={0.85}
+                    onPress={handleCancelBalanceEdit}
+                    disabled={savingBalance}
+                  >
+                    <Ionicons name="close-outline" size={18} color="#F87171" />
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <TouchableOpacity
+                  style={styles.balanceIconButton}
+                  activeOpacity={0.85}
+                  onPress={handleStartBalanceEdit}
+                  disabled={loading}
+                >
+                  <Ionicons name="wallet-outline" size={20} color="#A78BFA" />
+                </TouchableOpacity>
+              )}
+
+            </View>
           </View>
 
-          <Text style={styles.balanceAmount}>₹7,38,93,821</Text>
+          {editingBalance ? (
+            <TextInput
+              value={balanceInput}
+              onChangeText={(text) => setBalanceInput(text.replace(/[^0-9]/g, ""))}
+              keyboardType="numeric"
+              placeholder="Enter default balance"
+              placeholderTextColor="#475569"
+              style={styles.balanceInput}
+              editable={!savingBalance}
+            />
+          ) : (
+            <Text style={styles.balanceAmount}>
+              {formatCurrency(dashboard.balance.currentBalance)}
+            </Text>
+          )}
 
-          <Text style={styles.balanceNote}>
-            This is the total liquidity available for payouts and deposits.
-          </Text>
+          {/* <Text style={styles.balanceNote}>
+            Default {formatCurrency(dashboard.balance.defaultBalance)} + deposits{" "}
+            {formatCurrency(dashboard.balance.approvedSecurityDeposits)} - withdrawals{" "}
+            {formatCurrency(dashboard.balance.approvedWithdrawals)} - live credit{" "}
+            {formatCurrency(dashboard.balance.liveDepositCredit)} + live debit{" "}
+            {formatCurrency(dashboard.balance.liveDepositDebit)}
+          </Text> */}
+        </View>
+
+        <View style={styles.statsGrid}>
+          {balanceCards.map((card) => (
+            <View key={card.key} style={styles.statCard}>
+              <View style={styles.statIconWrap}>
+                <Ionicons name={card.icon} size={18} color="#A78BFA" />
+              </View>
+              <Text style={styles.statLabel}>{card.label}</Text>
+              <Text style={styles.statValue}>{card.value}</Text>
+            </View>
+          ))}
         </View>
 
         <SecurityDepositSetupCard />
         <AdminTelegramSettingsCard />
+
+        <TouchableOpacity
+          style={styles.historyButton}
+          activeOpacity={0.85}
+          onPress={() => router.push("/user-live-deposit-history" as Href)}
+        >
+          <View style={styles.historyButtonIcon}>
+            <Ionicons name="time-outline" size={18} color="#CBD5F5" />
+          </View>
+          <Text style={styles.historyButtonText}>Live Deposit History</Text>
+          <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
+        </TouchableOpacity>
       </ScrollView>
     );
   };

@@ -25,11 +25,28 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: 12,
+  },
+
+  balanceTitleWrap: {
+    flex: 1,
+  },
+
+  balanceActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
 
   balanceLabel: {
     color: "#94A3B8",
     fontSize: 13,
+  },
+
+  balanceSubLabel: {
+    color: "#64748B",
+    fontSize: 11,
+    marginTop: 4,
   },
 
   balanceAmount: {
@@ -39,10 +56,28 @@ export const styles = StyleSheet.create({
     marginTop: 10,
   },
 
+  balanceInput: {
+    color: "#F8FAFC",
+    fontSize: 34,
+    fontWeight: "700",
+    marginTop: 10,
+    paddingVertical: 0,
+  },
+
   balanceNote: {
     color: "#64748B",
     fontSize: 12,
     marginTop: 6,
+    lineHeight: 18,
+  },
+
+  balanceIconButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: "#0F172A",
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   depositSetupCard: {
@@ -243,6 +278,72 @@ export const styles = StyleSheet.create({
     paddingTop: 18,
     paddingBottom: 120,
     gap: 18,
+  },
+
+  statsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+  },
+
+  statCard: {
+    width: "48%",
+    backgroundColor: "#0F172A",
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.05)",
+  },
+
+  statIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "rgba(167,139,250,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+
+  statLabel: {
+    color: "#94A3B8",
+    fontSize: 12,
+    lineHeight: 18,
+  },
+
+  statValue: {
+    color: "#F8FAFC",
+    fontSize: 24,
+    fontWeight: "700",
+    marginTop: 10,
+  },
+
+  historyButton: {
+    backgroundColor: "#0F172A",
+    borderRadius: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.05)",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+
+  historyButtonIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "rgba(148,163,184,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  historyButtonText: {
+    flex: 1,
+    color: "#E2E8F0",
+    fontSize: 15,
+    fontWeight: "600",
   },
 
   heroCard: {
