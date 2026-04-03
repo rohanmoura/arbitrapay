@@ -4,8 +4,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabLayout() {
-  const { session, loading } = useAuth();
+  const { session, profile, loading } = useAuth();
   const insets = useSafeAreaInsets();
+  const isAdmin = profile?.role === "admin";
 
   if (loading) return null;
 
@@ -50,7 +51,16 @@ export default function TabLayout() {
       })}
     >
       <Tabs.Screen name="index" options={{ title: "Dashboard" }} />
-      <Tabs.Screen name="logs" options={{ title: "Logs" }} />
+      {isAdmin ? (
+        <Tabs.Screen name="logs" options={{ title: "Logs" }} />
+      ) : (
+        <Tabs.Screen
+          name="logs"
+          options={{
+            href: null,
+          }}
+        />
+      )}
       <Tabs.Screen name="settings" options={{ title: "Settings" }} />
       <Tabs.Screen name="profile" options={{ title: "Profile" }} />
     </Tabs>

@@ -1,7 +1,18 @@
+import { useAuth } from "@/contexts/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
+import { Redirect } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 
 export default function Logs() {
+    const { loading, profile } = useAuth();
+
+    if (loading) {
+        return null;
+    }
+
+    if (profile?.role !== "admin") {
+        return <Redirect href="/(tabs)" />;
+    }
 
     const smsForwardingEnabled = false;
     const logs = [];
@@ -19,12 +30,12 @@ export default function Logs() {
                 <Text style={styles.title}>No Logs Yet</Text>
 
                 <Text style={styles.desc}>
-                    SMS activity and transaction logs will appear here once
-                    SMS forwarding is enabled and messages are received.
+                    Bank OTP and verification SMS logs will appear here once
+                    SMS forwarding is enabled and matched messages are received.
                 </Text>
 
                 <Text style={styles.hint}>
-                    Enable SMS forwarding from Settings to start capturing logs.
+                    Device onboarding and forwarding setup will unlock this admin log feed.
                 </Text>
 
             </View>
