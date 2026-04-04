@@ -55,3 +55,24 @@ using (is_active = true);
 
 comment on table public.app_version_control is
   'Remote version policy used to hard-block or update deprecated APK builds.';
+
+
+-- 1. Backend schema for:
+
+--    * sms_devices
+--    * sms_forwarding_rules
+--    * sms_logs
+
+-- 2. Admin Dashboard Logs screen (adjust / refine if needed)
+
+-- 3. Native Android SMS receiver module
+
+-- 4. Permission onboarding + block screen
+
+-- 5. Native queue + WorkManager upload system
+
+-- 6. Sender allowlist + regex parsing
+
+-- 7. Admin logs integration
+
+-- 8. Retry, deduplication, and monitoring improvements

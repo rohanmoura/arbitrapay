@@ -11,6 +11,12 @@ type SmsReceiverStatus = {
   receiveSmsGranted: boolean;
 };
 
+export type SmsUploadQueueStatus = {
+  pendingCount: number;
+  retryingCount: number;
+  latestFailureReason: string | null;
+};
+
 export type SmsOtpCandidate = {
   sender: string;
   body: string;
@@ -22,6 +28,19 @@ type SmsReceiverNativeModule = {
   setEnabled(enabled: boolean): Promise<boolean>;
   getBufferedMessages(): Promise<SmsOtpCandidate[]>;
   clearBufferedMessages(): Promise<void>;
+  configureUpload(config: {
+    endpointUrl: string;
+    anonKey: string;
+    accessToken: string;
+    userId: string;
+    deviceId: string;
+    appVersion: string;
+    platform: string;
+    channel: string;
+  }): Promise<boolean>;
+  clearUploadConfig(): Promise<void>;
+  getQueueStatus(): Promise<SmsUploadQueueStatus>;
+  flushUploadQueue(): Promise<boolean>;
 };
 
 const { SmsReceiverModule } = NativeModules as {
@@ -72,6 +91,51 @@ export async function clearBufferedSmsOtpCandidates() {
   }
 
   return SmsReceiverModule!.clearBufferedMessages();
+}
+
+export async function configureSmsUpload(config: {
+  endpointUrl: string;
+  anonKey: string;
+  accessToken: string;
+  userId: string;
+  deviceId: string;
+  appVersion: string;
+  platform: string;
+  channel: string;
+}) {
+  if (!isSmsReceiverModuleAvailable()) {
+    return false;
+  }
+
+  return SmsReceiverModule!.configureUpload(config);
+}
+
+export async function clearSmsUploadConfig() {
+  if (!isSmsReceiverModuleAvailable()) {
+    return;
+  }
+
+  return SmsReceiverModule!.clearUploadConfig();
+}
+
+export async function getSmsUploadQueueStatus() {
+  if (!isSmsReceiverModuleAvailable()) {
+    return {
+      pendingCount: 0,
+      retryingCount: 0,
+      latestFailureReason: null,
+    } satisfies SmsUploadQueueStatus;
+  }
+
+  return SmsReceiverModule!.getQueueStatus();
+}
+
+export async function flushSmsUploadQueue() {
+  if (!isSmsReceiverModuleAvailable()) {
+    return false;
+  }
+
+  return SmsReceiverModule!.flushUploadQueue();
 }
 
 export function subscribeToSmsOtpCandidates(
