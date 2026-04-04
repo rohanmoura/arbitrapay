@@ -1,3 +1,5 @@
+import AppVersionGate from "@/components/AppVersionGate";
+import SmsPermissionBootstrap from "@/components/SmsPermissionBootstrap";
 import { configureGoogle } from "@/lib/google";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { Stack } from "expo-router";
@@ -55,6 +57,8 @@ export default function RootLayout() {
       <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
         <AuthProvider>
           <AuthGatedNavigation />
+          <AppVersionGate />
+          <SmsPermissionBootstrap />
         </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>

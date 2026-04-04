@@ -1,6 +1,9 @@
+import { useSmsForwardingSettings } from "@/hooks/useSmsForwardingSettings";
 import { styles } from "@/screens/settings/Settings.styles";
-import { useState } from "react";
+import Constants from "expo-constants";
+import { useMemo, useState } from "react";
 import {
+    ActivityIndicator,
     ScrollView,
     Switch,
     Text,
@@ -11,12 +14,15 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function Settings() {
-
-  const [forwardSms, setForwardSms] = useState(false);
+  const { loading, updating, state, setForwardingEnabled } = useSmsForwardingSettings();
   const [autoStartup, setAutoStartup] = useState(true);
   const [batteryOpt, setBatteryOpt] = useState(false);
   const [hideRecent, setHideRecent] = useState(false);
   const [keepAlive, setKeepAlive] = useState(false);
+  const appVersion = useMemo(
+    () => Constants.expoConfig?.version?.trim() || "1.0.0",
+    []
+  );
 
   const insets = useSafeAreaInsets();
 
@@ -54,18 +60,27 @@ export default function Settings() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.rowTitle}>Forward SMS</Text>
                 <Text style={styles.rowDesc}>
-                  Allow the app to read verification SMS messages.
+                  Allow the app to read bank OTP and verification SMS messages.
                 </Text>
               </View>
 
-              <Switch
-                value={forwardSms}
-                onValueChange={setForwardSms}
-                trackColor={{ false: "#374151", true: "#22C55E" }}
-                thumbColor={forwardSms ? "#ffffff" : "#9CA3AF"}
-              />
+              {loading || updating ? (
+                <ActivityIndicator size="small" color="#22C55E" />
+              ) : (
+                <Switch
+                  value={state.enabled}
+                  onValueChange={(value) => void setForwardingEnabled(value)}
+                  trackColor={{ false: "#374151", true: "#22C55E" }}
+                  thumbColor={state.enabled ? "#ffffff" : "#9CA3AF"}
+                />
+              )}
 
             </View>
+
+            <Text style={styles.permissionStatus}>
+              READ_SMS: {state.readSmsGranted ? "Granted" : "Not granted"} • RECEIVE_SMS:{" "}
+              {state.receiveSmsGranted ? "Granted" : "Not granted"}
+            </Text>
 
           </View>
 
@@ -159,6 +174,16 @@ export default function Settings() {
 
 
           {/* SIM SETTINGS */}
+
+          <View style={styles.card}>
+
+            <Text style={styles.sectionTitle}>App Version</Text>
+            <Text style={styles.sectionDesc}>
+              This installed APK version is checked against backend support rules on app open.
+            </Text>
+            <Text style={styles.versionText}>Current Version: {appVersion}</Text>
+
+          </View>
 
           <View style={styles.card}>
 

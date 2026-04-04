@@ -88,6 +88,19 @@ export const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 13,
     fontWeight: "600"
+  },
+
+  permissionStatus: {
+    color: "#94A3B8",
+    fontSize: 12,
+    lineHeight: 18
+  },
+
+  versionText: {
+    color: "#F8FAFC",
+    fontSize: 15,
+    fontWeight: "600",
+    marginTop: 4
   }
 
 });
