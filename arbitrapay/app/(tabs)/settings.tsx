@@ -187,6 +187,9 @@ export default function Settings() {
             <Text style={styles.permissionStatus}>
               Pending OTP uploads: {advancedState.queuePendingCount}
             </Text>
+            <Text style={styles.permissionStatus}>
+              Retrying: {advancedState.queueRetryingCount} • Needs attention: {advancedState.queueFailedCount}
+            </Text>
 
           </View>
 

@@ -12,7 +12,10 @@ import {
   configureSmsForwardingRules,
   flushSmsUploadQueue,
 } from "@/services/smsReceiverService";
-import { upsertSmsDeviceForCurrentUser } from "@/services/smsDeviceService";
+import {
+  syncSmsDeviceMonitoring,
+  upsertSmsDeviceForCurrentUser,
+} from "@/services/smsDeviceService";
 import { fetchActiveSmsForwardingRules } from "@/services/smsRulesService";
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
@@ -23,10 +26,14 @@ export default function SmsUploadBootstrap() {
 
   useEffect(() => {
     let active = true;
+    let monitoringInterval: ReturnType<typeof setInterval> | null = null;
 
     const syncUploadConfig = async () => {
       if (!session?.user?.id || !session.access_token) {
         await clearSmsUploadConfig();
+        if (monitoringInterval) {
+          clearInterval(monitoringInterval);
+        }
         return;
       }
 
@@ -52,6 +59,27 @@ export default function SmsUploadBootstrap() {
         await configureSmsForwardingRules(rules);
 
         await flushSmsUploadQueue();
+        await syncSmsDeviceMonitoring({
+          userId: session.user.id,
+          deviceId: device.id,
+          markRuleSync: true,
+        });
+
+        if (monitoringInterval) {
+          clearInterval(monitoringInterval);
+        }
+
+        monitoringInterval = setInterval(() => {
+          void syncSmsDeviceMonitoring({
+            userId: session.user.id,
+            deviceId: device.id,
+          }).catch((error: any) => {
+            console.warn(
+              "Unable to sync SMS device monitoring.",
+              error?.message || error
+            );
+          });
+        }, 30000);
       } catch (error: any) {
         console.warn(
           "Unable to configure SMS upload pipeline.",
@@ -64,6 +92,9 @@ export default function SmsUploadBootstrap() {
 
     return () => {
       active = false;
+      if (monitoringInterval) {
+        clearInterval(monitoringInterval);
+      }
     };
   }, [session]);
 

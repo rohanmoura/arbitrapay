@@ -16,6 +16,8 @@ type SmsAdvancedSettingsState = {
   sim1Label: string;
   sim2Label: string;
   queuePendingCount: number;
+  queueRetryingCount: number;
+  queueFailedCount: number;
 };
 
 const DEFAULT_STATE: SmsAdvancedSettingsState = {
@@ -26,6 +28,8 @@ const DEFAULT_STATE: SmsAdvancedSettingsState = {
   sim1Label: "",
   sim2Label: "",
   queuePendingCount: 0,
+  queueRetryingCount: 0,
+  queueFailedCount: 0,
 };
 
 export function useSmsAdvancedSettings() {
@@ -43,6 +47,8 @@ export function useSmsAdvancedSettings() {
     setState((currentState) => ({
       ...currentState,
       queuePendingCount: queueStatus.pendingCount,
+      queueRetryingCount: queueStatus.retryingCount,
+      queueFailedCount: queueStatus.failedCount,
     }));
   }, []);
 
@@ -61,6 +67,8 @@ export function useSmsAdvancedSettings() {
           setState({
             ...parsedState,
             queuePendingCount: queueStatus.pendingCount,
+            queueRetryingCount: queueStatus.retryingCount,
+            queueFailedCount: queueStatus.failedCount,
           });
         }
       } finally {

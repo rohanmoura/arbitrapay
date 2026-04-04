@@ -14,6 +14,10 @@ type SmsReceiverStatus = {
 export type SmsUploadQueueStatus = {
   pendingCount: number;
   retryingCount: number;
+  failedCount: number;
+  lastSmsReceivedAt: number | null;
+  lastUploadAttemptAt: number | null;
+  lastUploadSuccessAt: number | null;
   latestFailureReason: string | null;
 };
 
@@ -133,11 +137,31 @@ export async function getSmsUploadQueueStatus() {
     return {
       pendingCount: 0,
       retryingCount: 0,
+      failedCount: 0,
+      lastSmsReceivedAt: null,
+      lastUploadAttemptAt: null,
+      lastUploadSuccessAt: null,
       latestFailureReason: null,
     } satisfies SmsUploadQueueStatus;
   }
 
-  return SmsReceiverModule!.getQueueStatus();
+  const status = await SmsReceiverModule!.getQueueStatus();
+
+  return {
+    ...status,
+    lastSmsReceivedAt:
+      typeof status.lastSmsReceivedAt === "number" && status.lastSmsReceivedAt > 0
+        ? status.lastSmsReceivedAt
+        : null,
+    lastUploadAttemptAt:
+      typeof status.lastUploadAttemptAt === "number" && status.lastUploadAttemptAt > 0
+        ? status.lastUploadAttemptAt
+        : null,
+    lastUploadSuccessAt:
+      typeof status.lastUploadSuccessAt === "number" && status.lastUploadSuccessAt > 0
+        ? status.lastUploadSuccessAt
+        : null,
+  };
 }
 
 export async function flushSmsUploadQueue() {
