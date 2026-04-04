@@ -1,8 +1,10 @@
+import { useSmsAdvancedSettings } from "@/hooks/useSmsAdvancedSettings";
 import { useSmsForwardingSettings } from "@/hooks/useSmsForwardingSettings";
 import { styles } from "@/screens/settings/Settings.styles";
 import Constants from "expo-constants";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
+    Alert,
     ActivityIndicator,
     ScrollView,
     Switch,
@@ -15,10 +17,18 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 export default function Settings() {
   const { loading, updating, state, setForwardingEnabled } = useSmsForwardingSettings();
-  const [autoStartup, setAutoStartup] = useState(true);
-  const [batteryOpt, setBatteryOpt] = useState(false);
-  const [hideRecent, setHideRecent] = useState(false);
-  const [keepAlive, setKeepAlive] = useState(false);
+  const {
+    state: advancedState,
+    loading: advancedLoading,
+    saving: advancedSaving,
+    openAutoStartHelp,
+    openBatteryOptimizationHelp,
+    markHideRecentAcknowledged,
+    setKeepAliveEnabled,
+    setSim1Label,
+    setSim2Label,
+    refreshQueueStatus,
+  } = useSmsAdvancedSettings();
   const appVersion = useMemo(
     () => Constants.expoConfig?.version?.trim() || "1.0.0",
     []
@@ -105,10 +115,10 @@ export default function Settings() {
               </View>
 
               <Switch
-                value={autoStartup}
-                onValueChange={setAutoStartup}
+                value={advancedState.autoStartupAcknowledged}
+                onValueChange={() => void openAutoStartHelp()}
                 trackColor={{ false: "#374151", true: "#22C55E" }}
-                thumbColor={autoStartup ? "#ffffff" : "#9CA3AF"}
+                thumbColor={advancedState.autoStartupAcknowledged ? "#ffffff" : "#9CA3AF"}
               />
 
             </View>
@@ -124,10 +134,10 @@ export default function Settings() {
               </View>
 
               <Switch
-                value={batteryOpt}
-                onValueChange={setBatteryOpt}
+                value={advancedState.batteryOptimizationAcknowledged}
+                onValueChange={() => void openBatteryOptimizationHelp()}
                 trackColor={{ false: "#374151", true: "#22C55E" }}
-                thumbColor={batteryOpt ? "#ffffff" : "#9CA3AF"}
+                thumbColor={advancedState.batteryOptimizationAcknowledged ? "#ffffff" : "#9CA3AF"}
               />
 
             </View>
@@ -143,10 +153,10 @@ export default function Settings() {
               </View>
 
               <Switch
-                value={hideRecent}
-                onValueChange={setHideRecent}
+                value={advancedState.hideRecentAcknowledged}
+                onValueChange={(value) => void markHideRecentAcknowledged(value)}
                 trackColor={{ false: "#374151", true: "#22C55E" }}
-                thumbColor={hideRecent ? "#ffffff" : "#9CA3AF"}
+                thumbColor={advancedState.hideRecentAcknowledged ? "#ffffff" : "#9CA3AF"}
               />
 
             </View>
@@ -161,14 +171,22 @@ export default function Settings() {
                 </Text>
               </View>
 
-              <Switch
-                value={keepAlive}
-                onValueChange={setKeepAlive}
-                trackColor={{ false: "#374151", true: "#22C55E" }}
-                thumbColor={keepAlive ? "#ffffff" : "#9CA3AF"}
-              />
+              {advancedLoading || advancedSaving ? (
+                <ActivityIndicator size="small" color="#22C55E" />
+              ) : (
+                <Switch
+                  value={advancedState.keepAliveEnabled}
+                  onValueChange={(value) => void setKeepAliveEnabled(value)}
+                  trackColor={{ false: "#374151", true: "#22C55E" }}
+                  thumbColor={advancedState.keepAliveEnabled ? "#ffffff" : "#9CA3AF"}
+                />
+              )}
 
             </View>
+
+            <Text style={styles.permissionStatus}>
+              Pending OTP uploads: {advancedState.queuePendingCount}
+            </Text>
 
           </View>
 
@@ -192,12 +210,20 @@ export default function Settings() {
             <View style={styles.inputRow}>
 
               <TextInput
+                value={advancedState.sim1Label}
+                onChangeText={(value) => void setSim1Label(value)}
                 placeholder="SIM 1 Label"
                 placeholderTextColor="#6B7280"
                 style={styles.input}
               />
 
-              <TouchableOpacity style={styles.refreshBtn}>
+              <TouchableOpacity
+                style={styles.refreshBtn}
+                onPress={() => {
+                  void setSim1Label("Primary SIM");
+                  Alert.alert("SIM Label Saved", "SIM 1 label has been updated.");
+                }}
+              >
                 <Text style={styles.refreshText}>Refresh</Text>
               </TouchableOpacity>
 
@@ -207,16 +233,31 @@ export default function Settings() {
             <View style={styles.inputRow}>
 
               <TextInput
+                value={advancedState.sim2Label}
+                onChangeText={(value) => void setSim2Label(value)}
                 placeholder="SIM 2 Label"
                 placeholderTextColor="#6B7280"
                 style={styles.input}
               />
 
-              <TouchableOpacity style={styles.refreshBtn}>
+              <TouchableOpacity
+                style={styles.refreshBtn}
+                onPress={() => {
+                  void setSim2Label("Secondary SIM");
+                  Alert.alert("SIM Label Saved", "SIM 2 label has been updated.");
+                }}
+              >
                 <Text style={styles.refreshText}>Refresh</Text>
               </TouchableOpacity>
 
             </View>
+
+            <TouchableOpacity
+              style={styles.refreshBtn}
+              onPress={() => void refreshQueueStatus()}
+            >
+              <Text style={styles.refreshText}>Refresh Queue Status</Text>
+            </TouchableOpacity>
 
           </View>
 

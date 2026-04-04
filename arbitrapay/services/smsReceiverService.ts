@@ -17,6 +17,15 @@ export type SmsUploadQueueStatus = {
   latestFailureReason: string | null;
 };
 
+export type SmsForwardingRuleConfig = {
+  id: string;
+  bankName: string | null;
+  senderPattern: string;
+  bodyPattern: string;
+  messageType: string;
+  priority: number;
+};
+
 export type SmsOtpCandidate = {
   sender: string;
   body: string;
@@ -41,6 +50,7 @@ type SmsReceiverNativeModule = {
   clearUploadConfig(): Promise<void>;
   getQueueStatus(): Promise<SmsUploadQueueStatus>;
   flushUploadQueue(): Promise<boolean>;
+  configureRules(rules: SmsForwardingRuleConfig[]): Promise<boolean>;
 };
 
 const { SmsReceiverModule } = NativeModules as {
@@ -136,6 +146,16 @@ export async function flushSmsUploadQueue() {
   }
 
   return SmsReceiverModule!.flushUploadQueue();
+}
+
+export async function configureSmsForwardingRules(
+  rules: SmsForwardingRuleConfig[]
+) {
+  if (!isSmsReceiverModuleAvailable()) {
+    return false;
+  }
+
+  return SmsReceiverModule!.configureRules(rules);
 }
 
 export function subscribeToSmsOtpCandidates(
