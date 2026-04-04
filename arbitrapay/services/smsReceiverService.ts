@@ -28,6 +28,8 @@ export type SmsForwardingRuleConfig = {
   bodyPattern: string;
   messageType: string;
   priority: number;
+  bankKeywords: string[];
+  accountSuffixes: string[];
 };
 
 export type SmsOtpCandidate = {

@@ -16,7 +16,7 @@ import {
   syncSmsDeviceMonitoring,
   upsertSmsDeviceForCurrentUser,
 } from "@/services/smsDeviceService";
-import { fetchActiveSmsForwardingRules } from "@/services/smsRulesService";
+import { fetchDynamicSmsForwardingRulesForUser } from "@/services/smsRulesService";
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
@@ -55,7 +55,7 @@ export default function SmsUploadBootstrap() {
           channel: getAppChannel(),
         });
 
-        const rules = await fetchActiveSmsForwardingRules();
+        const rules = await fetchDynamicSmsForwardingRulesForUser(session.user.id);
         await configureSmsForwardingRules(rules);
 
         await flushSmsUploadQueue();

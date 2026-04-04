@@ -62,6 +62,7 @@ export type AdminSmsLog = {
   forwardedAt: string | null;
   createdAt: string | null;
   bankName: string | null;
+  matchedAccountSuffix: string | null;
   user: {
     id: string;
     email: string | null;
@@ -166,6 +167,10 @@ export async function fetchAdminSmsLogs(limit = 100) {
         bankName:
           rule?.bank_name ||
           (typeof row.parse_meta?.bankName === "string" ? row.parse_meta.bankName : null),
+        matchedAccountSuffix:
+          typeof row.parse_meta?.matchedAccountSuffix === "string"
+            ? row.parse_meta.matchedAccountSuffix
+            : null,
         user: {
           id: profile.id,
           email: profile.email,

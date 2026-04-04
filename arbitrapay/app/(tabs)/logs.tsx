@@ -138,6 +138,9 @@ export default function Logs() {
                     <Text style={styles.detailText}>OTP: {item.otpCode || "Not extracted"}</Text>
                     <Text style={styles.detailText}>Retries: {item.retryCount}</Text>
                     <Text style={styles.detailText}>
+                        Account Suffix: {item.matchedAccountSuffix || "Not matched"}
+                    </Text>
+                    <Text style={styles.detailText}>
                         Device: {item.device.deviceName || item.device.installationId || "Unknown"}
                     </Text>
                     <Text style={styles.detailText}>
