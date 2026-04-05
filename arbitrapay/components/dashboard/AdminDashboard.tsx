@@ -5,6 +5,7 @@ import AdminSidebar, {
 import AdminTelegramSettingsCard from "@/components/admin-dashboard/AdminTelegramSettingsCard";
 import SecurityDepositSetupCard from "@/components/admin-dashboard/SecurityDepositSetupCard";
 import SupportTicketsScreen from "@/components/admin-dashboard/support-tickets";
+import UsdtSellSetupCard from "@/components/admin-dashboard/UsdtSellSetupCard";
 import AdminUpdatesScreen from "@/components/admin-dashboard/updates";
 import UsersScreen from "@/components/admin-dashboard/UsersScreen";
 import { useAuth } from "@/contexts/AuthContext";
@@ -252,6 +253,7 @@ export default function AdminDashboard() {
 
         <SecurityDepositSetupCard />
         <AdminTelegramSettingsCard />
+        <UsdtSellSetupCard />
 
         <TouchableOpacity
           style={styles.historyButton}

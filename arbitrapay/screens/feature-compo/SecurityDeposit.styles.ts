@@ -182,6 +182,13 @@ export const styles = StyleSheet.create({
         marginTop: 2
     },
 
+    bankRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 10
+    },
+
     /* COMMISSION */
 
     commissionTitle: {

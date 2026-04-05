@@ -6,28 +6,26 @@ import * as Clipboard from "expo-clipboard";
 import { useAuth } from "@/contexts/AuthContext";
 import { pickImageFromGallery } from "@/utils/imageUpload";
 import {
-  SECURITY_DEPOSIT_CONFIG,
-  createSecurityDepositRequest,
-  DepositMethod,
-  fetchLatestSecurityDeposit,
-  fetchSecurityDepositConfiguration,
-  fetchUserDepositBankAccount,
-  uploadSecurityDepositProof,
-} from "@/services/securityDepositService";
+  createUsdtSellRequest,
+  DEFAULT_USDT_SELL_CONFIGURATION,
+  fetchLatestUsdtSellRequest,
+  fetchUsdtSellConfiguration,
+  uploadUsdtSellProof,
+} from "@/services/usdtSellService";
 
 type FormErrors = {
-  amount: string;
-  utr: string;
+  amountUsdt: string;
+  transactionHash: string;
   screenshot: string;
 };
 
 const EMPTY_ERRORS: FormErrors = {
-  amount: "",
-  utr: "",
+  amountUsdt: "",
+  transactionHash: "",
   screenshot: "",
 };
 
-function formatDepositDate(date: string | null) {
+function formatDate(date: string | null) {
   if (!date) {
     return "—";
   }
@@ -39,16 +37,20 @@ function formatDepositDate(date: string | null) {
   }).format(new Date(date));
 }
 
-function validateForm(amount: string, utr: string, screenshot: string | null) {
+function validateForm(
+  amountUsdt: string,
+  transactionHash: string,
+  screenshot: string | null
+) {
   const errors: FormErrors = { ...EMPTY_ERRORS };
-  const numericAmount = Number(amount);
+  const numericAmount = Number(amountUsdt);
 
-  if (!amount || Number.isNaN(numericAmount) || numericAmount < 5000) {
-    errors.amount = "Minimum deposit amount is ₹5,000";
+  if (!amountUsdt || Number.isNaN(numericAmount) || numericAmount <= 0) {
+    errors.amountUsdt = "Enter a valid USDT amount";
   }
 
-  if (!utr.trim()) {
-    errors.utr = "Transaction ID / UTR number is required";
+  if (!transactionHash.trim()) {
+    errors.transactionHash = "Transaction hash is required";
   }
 
   if (!screenshot) {
@@ -62,20 +64,19 @@ function hasErrors(errors: FormErrors) {
   return Object.values(errors).some(Boolean);
 }
 
-export function useSecurityDeposit() {
+export function useUsdtSell() {
   const { session } = useAuth();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [pickingScreenshot, setPickingScreenshot] = useState(false);
-  const [amount, setAmount] = useState("");
-  const [utr, setUtr] = useState("");
-  const [method, setMethod] = useState<"upi" | "bank">("upi");
+  const [amountUsdt, setAmountUsdt] = useState("");
+  const [transactionHash, setTransactionHash] = useState("");
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [toast, setToast] = useState("");
   const [copied, setCopied] = useState(false);
-  const [lastDeposit, setLastDeposit] = useState("—");
+  const [lastSell, setLastSell] = useState("—");
   const [errors, setErrors] = useState<FormErrors>(EMPTY_ERRORS);
-  const [config, setConfig] = useState(SECURITY_DEPOSIT_CONFIG);
+  const [configuration, setConfiguration] = useState(DEFAULT_USDT_SELL_CONFIGURATION);
 
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -89,7 +90,7 @@ export function useSecurityDeposit() {
     toastTimeoutRef.current = setTimeout(() => {
       setToast("");
       setCopied(false);
-    }, 2000);
+    }, 2200);
   }, []);
 
   useEffect(() => {
@@ -100,7 +101,7 @@ export function useSecurityDeposit() {
     };
   }, []);
 
-  const loadLastDeposit = useCallback(async () => {
+  const loadData = useCallback(async () => {
     if (!session?.user?.id) {
       setLoading(false);
       return;
@@ -109,19 +110,20 @@ export function useSecurityDeposit() {
     setLoading(true);
 
     try {
-      const [latest, depositConfig] = await Promise.all([
-        fetchLatestSecurityDeposit(session.user.id),
-        fetchSecurityDepositConfiguration(),
+      const [latestRequest, usdtConfiguration] = await Promise.all([
+        fetchLatestUsdtSellRequest(session.user.id),
+        fetchUsdtSellConfiguration(),
       ]);
-      setLastDeposit(formatDepositDate(latest?.created_at || null));
-      setConfig(depositConfig);
+
+      setLastSell(formatDate(latestRequest?.created_at || null));
+      setConfiguration(usdtConfiguration);
     } catch (error: any) {
       Alert.alert(
-        "Security Deposit Error",
-        error.message || "Unable to load your latest deposit."
+        "USDT Sell Error",
+        error.message || "Unable to load USDT Sell setup right now."
       );
-      setLastDeposit("—");
-      setConfig(SECURITY_DEPOSIT_CONFIG);
+      setLastSell("—");
+      setConfiguration(DEFAULT_USDT_SELL_CONFIGURATION);
     } finally {
       setLoading(false);
     }
@@ -129,24 +131,15 @@ export function useSecurityDeposit() {
 
   useFocusEffect(
     useCallback(() => {
-      loadLastDeposit();
-    }, [loadLastDeposit])
+      void loadData();
+    }, [loadData])
   );
 
-  const copyUpi = useCallback(async () => {
-    await Clipboard.setStringAsync(config.upiId);
+  const copyWalletAddress = useCallback(async () => {
+    await Clipboard.setStringAsync(configuration.walletAddress);
     setCopied(true);
-    showToast("UPI ID copied");
-  }, [config.upiId, showToast]);
-
-  const copyBankField = useCallback(
-    async (value: string, label: string) => {
-      await Clipboard.setStringAsync(value);
-      setCopied(true);
-      showToast(`${label} copied`);
-    },
-    [showToast]
-  );
+    showToast("Wallet address copied");
+  }, [configuration.walletAddress, showToast]);
 
   const pickScreenshot = useCallback(async () => {
     if (pickingScreenshot || submitting) {
@@ -167,19 +160,19 @@ export function useSecurityDeposit() {
     } catch (error: any) {
       Alert.alert(
         "Screenshot Error",
-        error.message || "Unable to select payment screenshot."
+        error.message || "Unable to select transaction screenshot."
       );
     } finally {
       setPickingScreenshot(false);
     }
   }, [pickingScreenshot, submitting]);
 
-  const submitDeposit = useCallback(async () => {
+  const submitUsdtSellRequest = useCallback(async () => {
     if (!session?.user?.id || submitting || pickingScreenshot) {
       return;
     }
 
-    const nextErrors = validateForm(amount, utr, screenshot);
+    const nextErrors = validateForm(amountUsdt, transactionHash, screenshot);
     setErrors(nextErrors);
 
     if (hasErrors(nextErrors)) {
@@ -189,78 +182,56 @@ export function useSecurityDeposit() {
     setSubmitting(true);
 
     try {
-      const bankAccount = await fetchUserDepositBankAccount(session.user.id);
+      const screenshotUrl = await uploadUsdtSellProof(session.user.id, screenshot!);
 
-      if (!bankAccount) {
-        Alert.alert(
-          "Bank Account Required",
-          "You must add a bank account before making a deposit request."
-        );
-        return;
-      }
-
-      const paymentProofUrl = await uploadSecurityDepositProof(
-        session.user.id,
-        screenshot!
-      );
-
-      const depositMethod: DepositMethod =
-        method === "upi" ? "UPI" : "BANK_TRANSFER";
-
-      const created = await createSecurityDepositRequest({
+      const created = await createUsdtSellRequest({
         userId: session.user.id,
-        amount: Number(amount),
-        utrNumber: utr.trim(),
-        paymentProofUrl,
-        depositMethod,
-        bankAccountId: bankAccount.id,
+        amountUsdt: Number(amountUsdt),
+        transactionHash: transactionHash.trim(),
+        screenshotUrl,
       });
 
-      setLastDeposit(formatDepositDate(created.created_at));
-      setAmount("");
-      setUtr("");
+      setLastSell(formatDate(created.created_at));
+      setAmountUsdt("");
+      setTransactionHash("");
       setScreenshot(null);
       setErrors(EMPTY_ERRORS);
-      showToast("Deposit request submitted");
+      showToast("USDT sell request submitted");
     } catch (error: any) {
       Alert.alert(
-        "Deposit Request Error",
-        error.message || "Unable to submit the deposit request."
+        "Submit Error",
+        error.message || "Unable to submit USDT sell request."
       );
     } finally {
       setSubmitting(false);
     }
   }, [
-    amount,
-    method,
+    amountUsdt,
     pickingScreenshot,
     screenshot,
     session?.user?.id,
     showToast,
     submitting,
-    utr,
+    transactionHash,
   ]);
 
   return {
     loading,
     submitting,
     pickingScreenshot,
-    amount,
-    utr,
-    method,
+    amountUsdt,
+    transactionHash,
     screenshot,
     toast,
     copied,
-    lastDeposit,
+    lastSell,
     errors,
-    config,
-    setAmount,
-    setUtr,
-    setMethod,
+    configuration,
+    setAmountUsdt,
+    setTransactionHash,
     setErrors,
-    copyUpi,
-    copyBankField,
+    copyWalletAddress,
     pickScreenshot,
-    submitDeposit,
+    submitUsdtSellRequest,
   };
 }

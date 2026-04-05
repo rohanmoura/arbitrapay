@@ -31,6 +31,10 @@ export const styles = StyleSheet.create({
     borderColor: "#1F2937"
   },
 
+  actionBtnWide: {
+    width: "100%",
+  },
+
   iconBox: {
     width: 44,
     height: 44,

@@ -49,6 +49,7 @@ export default function SecurityDeposit() {
         setMethod,
         setErrors,
         copyUpi,
+        copyBankField,
         pickScreenshot,
         submitDeposit,
     } = useSecurityDeposit();
@@ -231,13 +232,43 @@ export default function SecurityDeposit() {
                         <View style={styles.bankBox}>
 
                             <Text style={styles.bankLabel}>Account Number</Text>
-                            <Text style={styles.bankValue}>{config.bankTransfer.accountNumber}</Text>
+                            <View style={styles.bankRow}>
+                                <Text style={styles.bankValue}>{config.bankTransfer.accountNumber}</Text>
+                                <TouchableOpacity
+                                    style={styles.copyBtn}
+                                    onPress={() =>
+                                        void copyBankField(config.bankTransfer.accountNumber, "Account Number")
+                                    }
+                                >
+                                    <Ionicons name="copy-outline" size={18} color="#8B5CF6" />
+                                </TouchableOpacity>
+                            </View>
 
                             <Text style={styles.bankLabel}>IFSC Code</Text>
-                            <Text style={styles.bankValue}>{config.bankTransfer.ifscCode}</Text>
+                            <View style={styles.bankRow}>
+                                <Text style={styles.bankValue}>{config.bankTransfer.ifscCode}</Text>
+                                <TouchableOpacity
+                                    style={styles.copyBtn}
+                                    onPress={() =>
+                                        void copyBankField(config.bankTransfer.ifscCode, "IFSC Code")
+                                    }
+                                >
+                                    <Ionicons name="copy-outline" size={18} color="#8B5CF6" />
+                                </TouchableOpacity>
+                            </View>
 
                             <Text style={styles.bankLabel}>Bank Name</Text>
-                            <Text style={styles.bankValue}>{config.bankTransfer.bankName}</Text>
+                            <View style={styles.bankRow}>
+                                <Text style={styles.bankValue}>{config.bankTransfer.bankName}</Text>
+                                <TouchableOpacity
+                                    style={styles.copyBtn}
+                                    onPress={() =>
+                                        void copyBankField(config.bankTransfer.bankName, "Bank Name")
+                                    }
+                                >
+                                    <Ionicons name="copy-outline" size={18} color="#8B5CF6" />
+                                </TouchableOpacity>
+                            </View>
 
                         </View>
 
@@ -400,7 +431,7 @@ export default function SecurityDeposit() {
                                 </Text>
 
                                 <Text style={styles.uploadSub}>
-                                    PNG / JPG • Max 10MB
+                                    Upload a clear screenshot for easier verification.
                                 </Text>
                             </>
 
@@ -424,7 +455,9 @@ export default function SecurityDeposit() {
                         <Text style={styles.infoText}>
                             Make sure the UTR number and payment screenshot are correct.
                             Incorrect details may delay verification. Deposits are usually
-                            approved within 24 hours after verification.
+                            approved within 24 hours after verification. Please deposit only
+                            from the bank account you have added. Using a different account
+                            may cause verification issues.
                         </Text>
 
                     </View>

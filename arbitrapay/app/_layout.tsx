@@ -30,6 +30,7 @@ function AuthGatedNavigation() {
     <Stack.Screen key="referral" name="referral/index" />,
     <Stack.Screen key="security-deposit" name="security-deposit/index" />,
     <Stack.Screen key="updates" name="updates/index" />,
+    <Stack.Screen key="usdt-sell" name="usdt-sell/index" />,
     <Stack.Screen key="admin-update-detail" name="admin-update-detail/index" />,
     <Stack.Screen key="user-account-activations" name="user-account-activations/index" />,
     <Stack.Screen key="user-bank-account" name="user-bank-account/index" />,

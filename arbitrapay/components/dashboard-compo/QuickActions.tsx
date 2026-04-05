@@ -27,7 +27,13 @@ export default function QuickLinks() {
       title: "Transactions",
       icon: "time-outline",
       route: "/payment-history"
-    }
+    },
+    {
+      title: "Sell USDT",
+      icon: "logo-bitcoin",
+      route: "/usdt-sell",
+      fullWidth: true
+    },
   ];
 
   return (
@@ -40,7 +46,7 @@ export default function QuickLinks() {
         {actions.map((item, index) => (
           <TouchableOpacity
             key={index}
-            style={styles.actionBtn}
+            style={[styles.actionBtn, item.fullWidth && styles.actionBtnWide]}
             onPress={() => router.push(item.route as any)}
           >
 
