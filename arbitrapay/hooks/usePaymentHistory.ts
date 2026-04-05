@@ -66,6 +66,7 @@ const EMPTY_SUMMARY: PaymentHistorySummary = {
   pendingWithdrawals: 0,
   totalBankAccounts: 0,
   verifiedBankAccounts: 0,
+  totalUsdtSold: 0,
 };
 
 export function usePaymentHistory(targetUserId?: string) {

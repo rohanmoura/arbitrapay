@@ -6,6 +6,7 @@ import AdminTelegramSettingsCard from "@/components/admin-dashboard/AdminTelegra
 import SecurityDepositSetupCard from "@/components/admin-dashboard/SecurityDepositSetupCard";
 import SupportTicketsScreen from "@/components/admin-dashboard/support-tickets";
 import UsdtSellSetupCard from "@/components/admin-dashboard/UsdtSellSetupCard";
+import UsdtSellRequests from "@/components/admin-dashboard/UsdtSellRequests";
 import AdminUpdatesScreen from "@/components/admin-dashboard/updates";
 import UsersScreen from "@/components/admin-dashboard/UsersScreen";
 import { useAuth } from "@/contexts/AuthContext";
@@ -34,6 +35,7 @@ const ADMIN_SECTIONS: AdminSidebarItem[] = [
   { key: "users", label: "Users", icon: "people-outline" },
   { key: "bank_accounts", label: "Bank Accounts", icon: "card-outline" },
   { key: "deposits", label: "Deposits", icon: "wallet-outline" },
+  { key: "usdt", label: "USDT", icon: "logo-bitcoin" },
   { key: "account_activations", label: "Account Activations", icon: "checkmark-circle-outline" },
   { key: "live_deposits", label: "Live Deposits", icon: "pulse-outline" },
   { key: "withdrawals", label: "Withdrawals", icon: "arrow-down-outline" },
@@ -149,6 +151,9 @@ export default function AdminDashboard() {
     }
     if (activeSection === "account_activations") {
       return <AccountActivationsScreen />;
+    }
+    if (activeSection === "usdt") {
+      return <UsdtSellRequests />;
     }
     if (activeSection === "live_deposits") {
       return <LiveDepositScreen />;

@@ -41,6 +41,11 @@ type AccountActivationRow = {
   bank_account_id: string;
 };
 
+type UsdtSellRow = {
+  id: string;
+  amount_usdt: number | string | null;
+};
+
 type TransactionRow = {
   id: string;
   type: string;
@@ -61,6 +66,7 @@ export type PaymentHistorySummary = {
   pendingWithdrawals: number;
   totalBankAccounts: number;
   verifiedBankAccounts: number;
+  totalUsdtSold: number;
 };
 
 export type PaymentHistoryItem = {
@@ -202,6 +208,23 @@ async function fetchAccountActivations(userId: string) {
   return (data || []) as AccountActivationRow[];
 }
 
+async function fetchUsdtSellRequests(userId: string) {
+  const { data, error } = await supabase
+    .from("usdt_sell_requests")
+    .select("id, amount_usdt")
+    .eq("user_id", userId);
+
+  if (error) {
+    if (error.code === "42P01") {
+      return [];
+    }
+
+    throw error;
+  }
+
+  return (data || []) as UsdtSellRow[];
+}
+
 export async function fetchPaymentHistoryData(userId: string) {
   const [
     transactions,
@@ -210,6 +233,7 @@ export async function fetchPaymentHistoryData(userId: string) {
     liveDeposits,
     bankAccounts,
     accountActivations,
+    usdtSellRequests,
   ] = await Promise.all([
     fetchUserTransactions(userId),
     fetchSecurityDeposits(userId),
@@ -217,6 +241,7 @@ export async function fetchPaymentHistoryData(userId: string) {
     fetchLiveDeposits(userId),
     fetchBankAccounts(userId),
     fetchAccountActivations(userId),
+    fetchUsdtSellRequests(userId),
   ]);
 
   const bankLookup = new Map(bankAccounts.map((bank) => [bank.id, bank]));
@@ -236,7 +261,12 @@ export async function fetchPaymentHistoryData(userId: string) {
         .filter((activation) => normalizeStatus(activation.status) === "approved")
         .map((activation) => activation.bank_account_id)
     ).size,
+    totalUsdtSold: 0,
   };
+
+  usdtSellRequests.forEach((request) => {
+    summary.totalUsdtSold += numberValue(Number(request.amount_usdt || 0));
+  });
 
   securityDeposits.forEach((deposit) => {
     const normalizedStatus = normalizeStatus(deposit.status);

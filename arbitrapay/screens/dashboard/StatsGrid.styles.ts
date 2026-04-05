@@ -64,6 +64,10 @@ export const styles = StyleSheet.create({
 
   valuePending: {
     color: "#B084F5"
+  },
+
+  valueUsdt: {
+    color: "#22D3EE",
   }
 
 });

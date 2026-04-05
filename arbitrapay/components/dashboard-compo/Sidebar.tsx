@@ -43,11 +43,6 @@ export default function Sidebar({ visible, onClose }: Props) {
             label: "Security Wallet",
             route: "/security-deposit"
         },
-        {
-            icon: "logo-bitcoin",
-            label: "USDT Sell",
-            route: "/usdt-sell"
-        },
         { icon: "business-outline", label: "Linked Banks", route: "/bank-account" },
         {
             icon: "arrow-down-outline",

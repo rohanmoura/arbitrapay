@@ -54,7 +54,7 @@ function validateForm(
   }
 
   if (!screenshot) {
-    errors.screenshot = "Payment screenshot is required";
+    errors.screenshot = "Transaction receipt is required";
   }
 
   return errors;
@@ -159,8 +159,8 @@ export function useUsdtSell() {
       setErrors((current) => ({ ...current, screenshot: "" }));
     } catch (error: any) {
       Alert.alert(
-        "Screenshot Error",
-        error.message || "Unable to select transaction screenshot."
+        "Receipt Error",
+        error.message || "Unable to select transaction receipt."
       );
     } finally {
       setPickingScreenshot(false);

@@ -35,6 +35,11 @@ export const styles = StyleSheet.create({
     width: "100%",
   },
 
+  metricBtn: {
+    backgroundColor: "#0D1A26",
+    borderColor: "#164E63",
+  },
+
   iconBox: {
     width: 44,
     height: 44,
@@ -50,6 +55,13 @@ export const styles = StyleSheet.create({
     color: "#E5E7EB",
     fontSize: 14,
     fontWeight: "500"
+  },
+
+  metricValue: {
+    color: "#67E8F9",
+    fontSize: 18,
+    fontWeight: "700",
+    marginTop: 2,
   }
 
 });

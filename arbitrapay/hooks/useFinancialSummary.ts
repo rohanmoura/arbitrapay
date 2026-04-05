@@ -1,6 +1,6 @@
+import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useState } from "react";
 import { Alert } from "react-native";
-import { useFocusEffect } from "@react-navigation/native";
 
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -16,6 +16,7 @@ const EMPTY_SUMMARY: PaymentHistorySummary = {
   pendingWithdrawals: 0,
   totalBankAccounts: 0,
   verifiedBankAccounts: 0,
+  totalUsdtSold: 0,
 };
 
 export function useFinancialSummary() {

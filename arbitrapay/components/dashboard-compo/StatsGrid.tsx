@@ -6,6 +6,7 @@ type Props = {
   currentBalance: number;
   totalDeposits: number;
   pendingWithdrawals: number;
+  totalUsdtSold: number;
 };
 
 function formatCurrency(value: number) {
@@ -19,6 +20,7 @@ export default function StatsGrid({
   currentBalance,
   totalDeposits,
   pendingWithdrawals,
+  totalUsdtSold,
 }: Props) {
   return (
     <View style={styles.container}>
@@ -49,6 +51,13 @@ export default function StatsGrid({
         <Ionicons name="time-outline" size={16} style={styles.icon} />
         <Text style={styles.label}>Pending Withdraw</Text>
         <Text style={[styles.value, styles.valuePending]}>{formatCurrency(pendingWithdrawals)}</Text>
+      </View>
+
+      <View style={styles.row}>
+        <View style={[styles.accent, { backgroundColor: "#22D3EE" }]} />
+        <Ionicons name="logo-bitcoin" size={16} style={styles.icon} />
+        <Text style={styles.label}>Total USDT Sold</Text>
+        <Text style={[styles.value, styles.valueUsdt]}>${formatCurrency(totalUsdtSold)}</Text>
       </View>
 
     </View>

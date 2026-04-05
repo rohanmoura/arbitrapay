@@ -70,12 +70,13 @@ export default function UserDashboard() {
 
         <WalletHero currentBalance={summary.currentBalance} />
 
-        <QuickLinks />
+        <QuickLinks totalUsdtSold={summary.totalUsdtSold} />
 
         <StatsGrid
           currentBalance={summary.currentBalance}
           totalDeposits={summary.totalDeposits}
           pendingWithdrawals={summary.pendingWithdrawals}
+          totalUsdtSold={summary.totalUsdtSold}
         />
 
         <BankStats

@@ -209,6 +209,7 @@ export default function UsdtSellScreen() {
             <Text style={styles.errorText}>{errors.transactionHash}</Text>
           ) : null}
 
+          <Text style={styles.inputLabel}>Transaction Receipt</Text>
           <TouchableOpacity
             style={styles.uploadBox}
             onPress={pickScreenshot}
@@ -217,7 +218,7 @@ export default function UsdtSellScreen() {
             {screenshot ? (
               <>
                 <Image source={{ uri: screenshot }} style={styles.previewImage} />
-                <Text style={styles.uploadChange}>Change Screenshot</Text>
+                <Text style={styles.uploadChange}>Change Transaction Receipt</Text>
               </>
             ) : (
               <>
@@ -227,7 +228,7 @@ export default function UsdtSellScreen() {
                   <Ionicons name="cloud-upload-outline" size={34} color="#22D3EE" />
                 )}
 
-                <Text style={styles.uploadText}>Upload Payment Screenshot</Text>
+                <Text style={styles.uploadText}>Upload Transaction Receipt</Text>
                 <Text style={styles.uploadSub}>
                   Upload a clear screenshot for easier verification.
                 </Text>

@@ -201,11 +201,7 @@ export async function uploadUsdtSellProof(userId: string, imageUri: string) {
     throw uploadError;
   }
 
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from(USDT_SELL_BUCKET).getPublicUrl(filePath);
-
-  return publicUrl;
+  return filePath;
 }
 
 export async function createUsdtSellRequest(input: {
@@ -237,4 +233,20 @@ export async function createUsdtSellRequest(input: {
   }
 
   return data as UsdtSellRequestRecord;
+}
+
+export async function getUsdtSellProofUrl(pathOrUrl: string) {
+  if (/^https?:\/\//i.test(pathOrUrl)) {
+    return pathOrUrl;
+  }
+
+  const { data, error } = await supabase.storage
+    .from(USDT_SELL_BUCKET)
+    .createSignedUrl(pathOrUrl, 5 * 60);
+
+  if (error) {
+    throw error;
+  }
+
+  return data.signedUrl;
 }

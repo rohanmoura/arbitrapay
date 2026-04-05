@@ -16,6 +16,7 @@ export type AdminSection =
   | "users"
   | "bank_accounts"
   | "deposits"
+  | "usdt"
   | "account_activations"
   | "live_deposits"
   | "withdrawals"
