@@ -1,8 +1,9 @@
 import {
   deleteAdminSupportTicket,
   fetchAdminSupportTickets,
-  type AdminSupportTicket,
   updateAdminSupportTicketStatus,
+  type AdminSupportTicket,
+  type AdminSupportTicketStatus,
 } from "@/services/adminSupportTicketsService";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback, useMemo, useState } from "react";
@@ -170,7 +171,7 @@ export function useAdminSupportTickets() {
             ticket.id === ticketId
               ? {
                   ...ticket,
-                  status: updated.status,
+                  status: updated.status as AdminSupportTicketStatus,
                   updatedAt: updated.updatedAt,
                 }
               : ticket

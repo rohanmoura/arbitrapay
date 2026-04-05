@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppState, type AppStateStatus, Platform } from "react-native";
 
+import { getCurrentAppVersion } from "@/lib/appIdentity";
 import {
   cacheActiveAppVersionPolicy,
   clearCachedAppVersionPolicy,
   evaluateAppVersionPolicy,
   fetchActiveAppVersionPolicy,
   getCachedAppVersionPolicy,
-  getCurrentAppVersion,
   type AppVersionPolicy,
 } from "@/services/appVersionService";
 
